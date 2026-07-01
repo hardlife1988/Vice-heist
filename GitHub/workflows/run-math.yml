@@ -1,0 +1,36 @@
+name: Run Math SDK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        
+      - name: Clone Stake SDK
+        run: |
+          git clone https://github.com/StakeEngine/math-sdk.git
+          cd math-sdk
+          make setup
+          
+      - name: Run Simulation
+        run: |
+          cd math
+          python3 run.py
+          
+      - name: Upload Output
+        uses: actions/upload-artifact@v3
+        with:
+          name: math-output
+          path: math/library/publish_files/
