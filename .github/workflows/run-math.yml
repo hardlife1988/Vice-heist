@@ -32,7 +32,9 @@ jobs:
           python3 run.py
           
       - name: Upload Output
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: math-output
           path: math/library/publish_files/
+          if-no-files-found: warn
