@@ -1,187 +1,88 @@
 """
-StakeEngine integration for Vice-heist.
-Provides provably fair verification using blockchain.
+StakeEngine provably fair integration for Vice Heist.
+
+The provably fair algorithm:
+  1. Server generates a random server_seed (kept secret until rotated).
+  2. Server sends sha256(server_seed) to client BEFORE any bets.
+  3. Client provides client_seed (can change between sessions).
+  4. Each spin: nonce increments by 1.
+  5. Spin entropy: HMAC-SHA256(key=server_seed, msg=f"{client_seed}:{nonce}")
+  6. Player can verify after server_seed is revealed (on rotation / cashout).
 """
 
 import hashlib
+import hmac
+import secrets
 import json
-from typing import Dict, Tuple
 
 
-class StakeEngineIntegration:
-    """Integration with StakeEngine for provably fair gaming."""
-    
-    def __init__(self, game_id: str, api_key: str = None):
-        """
-        Initialize StakeEngine integration.
-        
-        Args:
-            game_id: Unique game identifier
-            api_key: StakeEngine API key (optional for demo)
-        """
-        self.game_id = game_id
-        self.api_key = api_key
-        self.server_seed = None
-        self.client_seed = None
-        self.nonce = 0
-    
-    def generate_server_seed(self) -> str:
-        """
-        Generate server seed for provably fair.
-        
-        Returns:
-            str: Server seed hash
-        """
-        import secrets
-        seed = secrets.token_hex(32)
-        self.server_seed = seed
-        return hashlib.sha256(seed.encode()).hexdigest()
-    
-    def set_client_seed(self, client_seed: str):
-        """
-        Set client seed.
-        
-        Args:
-            client_seed: Client-provided seed
-        """
-        self.client_seed = client_seed
-    
-    def generate_spin_hash(self) -> str:
-        """
-        Generate cryptographic hash for spin.
-        
-        Returns:
-            str: Spin verification hash
-        """
-        if not self.server_seed or not self.client_seed:
-            raise ValueError("Server seed and client seed must be set")
-        
-        combined = f"{self.server_seed}{self.client_seed}{self.nonce}"
-        self.nonce += 1
-        return hashlib.sha256(combined.encode()).hexdigest()
-    
-    def verify_spin(self, spin_result: Dict, spin_hash: str) -> bool:
-        """
-        Verify spin result is fair.
-        
-        Args:
-            spin_result: Reel spin result
-            spin_hash: Hash from generation
-            
-        Returns:
-            bool: True if spin is verified fair
-        """
-        # In production, this would validate against blockchain
-        # For now, we verify the hash matches our generation
-        verification_hash = self._hash_result(spin_result)
-        return verification_hash == spin_hash
-    
-    def generate_provably_fair_spin(self, reel_grid) -> Dict:
-        """
-        Generate spin with provably fair verification.
-        
-        Args:
-            reel_grid: Reel spin result
-            
-        Returns:
-            dict: Spin data with verification
-        """
-        spin_hash = self.generate_spin_hash()
-        
-        return {
-            "game_id": self.game_id,
-            "reel_grid": [[s.value for s in row] for row in reel_grid],
-            "server_seed_hash": hashlib.sha256(self.server_seed.encode()).hexdigest() if self.server_seed else None,
-            "client_seed": self.client_seed,
-            "nonce": self.nonce - 1,
-            "verification_hash": spin_hash,
-            "verified": True,
-        }
-    
-    @staticmethod
-    def _hash_result(result: Dict) -> str:
-        """
-        Create hash of result.
-        
-        Args:
-            result: Result data
-            
-        Returns:
-            str: Result hash
-        """
-        result_json = json.dumps(result, sort_keys=True)
-        return hashlib.sha256(result_json.encode()).hexdigest()
-    
-    def get_verification_details(self) -> Dict:
-        """
-        Get details for verification.
-        
-        Returns:
-            dict: Verification information
-        """
-        return {
-            "game_id": self.game_id,
-            "server_seed_hash": hashlib.sha256(self.server_seed.encode()).hexdigest() if self.server_seed else None,
-            "client_seed": self.client_seed,
-            "nonce": self.nonce,
-            "total_spins": self.nonce,
-        }
+def generate_server_seed() -> tuple[str, str]:
+    """
+    Generate a new server seed.
+
+    Returns:
+        (server_seed, server_seed_hash) — keep server_seed secret,
+        show server_seed_hash to the player before bets start.
+    """
+    seed = secrets.token_hex(32)           # 256-bit random secret
+    seed_hash = hashlib.sha256(seed.encode()).hexdigest()
+    return seed, seed_hash
 
 
-class ProvablyFairValidator:
-    """Validates provably fair spins."""
-    
-    @staticmethod
-    def validate_spin_sequence(spins: list, server_seed: str, client_seed: str) -> bool:
-        """
-        Validate a sequence of spins.
-        
-        Args:
-            spins: List of spin results
-            server_seed: Server seed used
-            client_seed: Client seed used
-            
-        Returns:
-            bool: True if all spins are valid
-        """
-        nonce = 0
-        for spin in spins:
-            combined = f"{server_seed}{client_seed}{nonce}"
-            expected_hash = hashlib.sha256(combined.encode()).hexdigest()
-            
-            if spin.get('verification_hash') != expected_hash:
-                return False
-            
-            nonce += 1
-        
-        return True
-    
-    @staticmethod
-    def generate_audit_report(spins: list, game_config: Dict) -> Dict:
-        """
-        Generate audit report for spins.
-        
-        Args:
-            spins: List of spin results
-            game_config: Game configuration
-            
-        Returns:
-            dict: Audit report
-        """
-        total_wagered = game_config.get('total_wagered', 0)
-        total_won = game_config.get('total_won', 0)
-        
-        return {
-            "game_id": game_config.get('game_id'),
-            "total_spins": len(spins),
-            "total_wagered": total_wagered,
-            "total_won": total_won,
-            "theoretical_rtp": game_config.get('rtp', 0.965),
-            "actual_rtp": total_won / total_wagered if total_wagered > 0 else 0,
-            "variance": abs((total_won / total_wagered if total_wagered > 0 else 0) - game_config.get('rtp', 0.965)),
-            "all_spins_verified": ProvablyFairValidator.validate_spin_sequence(
-                spins,
-                game_config.get('server_seed', ''),
-                game_config.get('client_seed', '')
-            ),
-        }
+def get_server_seed_hash(server_seed: str) -> str:
+    return hashlib.sha256(server_seed.encode()).hexdigest()
+
+
+def generate_spin_bytes(server_seed: str, client_seed: str, nonce: int) -> bytes:
+    """
+    Generate the raw entropy bytes for a spin.
+    Returns 32 bytes of HMAC-SHA256.
+    """
+    message = f"{client_seed}:{nonce}".encode()
+    return hmac.new(server_seed.encode(), message, hashlib.sha256).digest()
+
+
+def verify_spin(server_seed: str, client_seed: str, nonce: int,
+                reel_grid_values: list) -> dict:
+    """
+    Verify that a spin result matches the provably fair hash.
+
+    Args:
+        server_seed:      Revealed server seed
+        client_seed:      Client seed used for this spin
+        nonce:            Nonce used for this spin
+        reel_grid_values: 3×5 list of symbol value strings (e.g. 'W', 'D', ...)
+
+    Returns:
+        {verified: bool, spin_hash: str, grid_hash: str}
+    """
+    spin_bytes = generate_spin_bytes(server_seed, client_seed, nonce)
+    spin_hash = spin_bytes.hex()
+
+    # Derive what the grid should have been from the hash bytes
+    from reel_engine import ReelWeights, _build_cumulative, _pick_from_cumulative
+    reels = 5
+    rows = 3
+    cum_data = [_build_cumulative(ReelWeights.ALL_REELS[r]) for r in range(reels)]
+    reel_columns = []
+    byte_idx = 0
+    for reel_num in range(reels):
+        symbols, cumulative, total = cum_data[reel_num]
+        col = []
+        for _ in range(rows):
+            raw = (spin_bytes[byte_idx] << 8) | spin_bytes[byte_idx + 1]
+            byte_idx += 2
+            col.append(_pick_from_cumulative(raw, symbols, cumulative, total))
+        reel_columns.append(col)
+
+    expected_grid = []
+    for row in range(rows):
+        expected_grid.append([reel_columns[reel][row].value for reel in range(reels)])
+
+    verified = (expected_grid == reel_grid_values)
+    return {
+        'verified': verified,
+        'spin_hash': spin_hash,
+        'expected_grid': expected_grid,
+        'provided_grid': reel_grid_values,
+    }
