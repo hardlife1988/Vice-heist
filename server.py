@@ -26,15 +26,17 @@ from reel_engine import ReelEngine
 from win_evaluator import WinEvaluator
 from stake_engine import generate_server_seed, get_server_seed_hash, verify_spin
 
-# ── App setup ────────────────────────────────────────────────────────────────
+# ── App setup ────────────────────────────────────────────────
 
 app = Flask(__name__, static_folder="static")
 
 _secret = os.environ.get("SESSION_SECRET")
 if not _secret:
-    raise RuntimeError(
-        "SESSION_SECRET environment variable is not set. "
-        "Set it to a random string before starting the server."
+    # Codespaces / local demo: do not crash if the env var is missing.
+    _secret = secrets.token_hex(32)
+    print(
+        "WARNING: SESSION_SECRET is not set. Using a random demo secret. "
+        "Sessions reset when the server restarts."
     )
 app.secret_key = _secret
 
@@ -42,7 +44,7 @@ CONFIG   = GameConfig()
 ENGINE   = ReelEngine(CONFIG)
 EVALUATOR = WinEvaluator(CONFIG)
 
-# ── Server-side session store ─────────────────────────────────────────────────
+# ── Server-side session store ───────────────────────────────────────
 # Maps session_id (str) → game state dict.
 # In production, replace with Redis / PostgreSQL.
 _GAME_SESSIONS: dict[str, dict] = {}
@@ -86,7 +88,7 @@ def _rotate_server_seed(gs: dict) -> str:
     return old_seed
 
 
-# ── Static file serving ───────────────────────────────────────────────────────
+# ── Static file serving ─────────────────────────────────────────
 
 @app.route("/")
 def index():
@@ -115,7 +117,7 @@ def static_files(filename):
     return send_from_directory("static", filename)
 
 
-# ── API: game config ──────────────────────────────────────────────────────────
+# ── API: game config ──────────────────────────────────────────
 
 @app.route("/api/config", methods=["GET"])
 def api_config():
@@ -131,7 +133,7 @@ def api_config():
     })
 
 
-# ── API: spin ─────────────────────────────────────────────────────────────────
+# ── API: spin ───────────────────────────────────────────────
 
 @app.route("/api/spin", methods=["POST"])
 def api_spin():
@@ -240,7 +242,7 @@ def api_spin():
     })
 
 
-# ── API: update client seed ───────────────────────────────────────────────────
+# ── API: update client seed ───────────────────────────────────────
 
 @app.route("/api/seed", methods=["POST"])
 def api_set_seed():
@@ -263,7 +265,7 @@ def api_set_seed():
     })
 
 
-# ── API: verify spin ──────────────────────────────────────────────────────────
+# ── API: verify spin ──────────────────────────────────────────
 
 @app.route("/api/verify", methods=["POST"])
 def api_verify():
@@ -283,7 +285,7 @@ def api_verify():
     return jsonify(result)
 
 
-# ── API: deposit (demo) ───────────────────────────────────────────────────────
+# ── API: deposit (demo) ───────────────────────────────────────
 
 @app.route("/api/deposit", methods=["POST"])
 def api_deposit():
@@ -298,7 +300,7 @@ def api_deposit():
     return jsonify({"balance": gs["balance"]})
 
 
-# ── Run ───────────────────────────────────────────────────────────────────────
+# ── Run ───────────────────────────────────────────────
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
