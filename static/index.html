@@ -77,62 +77,9 @@
 </main>
 
 <section class="pf-panel">
-  <h2 class="pf-title">Provably Fair</h2>
-
-  <div class="pf-grid">
-    <div class="pf-field">
-      <label>Server Seed Hash <span class="pf-hint">(SHA-256 of secret seed)</span></label>
-      <input type="text" id="pf-server-seed-hash" readonly />
-    </div>
-
-    <div class="pf-field">
-      <label>Client Seed <span class="pf-hint">(changing rotates server seed)</span></label>
-      <div class="pf-row">
-        <input type="text" id="pf-client-seed" />
-        <button class="btn-pf" id="btn-update-seed" type="button">Update</button>
-      </div>
-    </div>
-
-    <div class="pf-field">
-      <label>Nonce <span class="pf-hint">(increments each spin)</span></label>
-      <input type="text" id="pf-nonce" readonly />
-    </div>
-  </div>
-
-  <div class="pf-reveal" id="pf-reveal" style="display:none">
-    <h3>Previous Server Seed (Revealed)</h3>
-    <p class="pf-note">Your previous server seed has been revealed. You can now verify any spin from that session.</p>
-    <div class="pf-field">
-      <label>Revealed Server Seed</label>
-      <input type="text" id="pf-revealed-seed" readonly />
-    </div>
-    <button class="btn-pf" id="btn-verify-last" type="button">Verify Last Spin</button>
-    <div class="pf-verify-result" id="pf-verify-result" style="display:none"></div>
-  </div>
-
-  <details class="pf-manual">
-    <summary>Manual Verification</summary>
-    <div class="pf-grid" style="margin-top:12px">
-      <div class="pf-field">
-        <label>Server Seed</label>
-        <input type="text" id="v-server-seed" placeholder="Paste revealed server seed" />
-      </div>
-      <div class="pf-field">
-        <label>Client Seed</label>
-        <input type="text" id="v-client-seed" placeholder="Client seed used" />
-      </div>
-      <div class="pf-field">
-        <label>Nonce</label>
-        <input type="number" id="v-nonce" placeholder="0" min="0" />
-      </div>
-      <div class="pf-field">
-        <label>Reel Grid (JSON — 3×5 array of symbol codes)</label>
-        <input type="text" id="v-grid" placeholder='[["W","D","R","E","H"],["C","G","R","D","P"],["R","E","B","R","C"]]' />
-      </div>
-    </div>
-    <button class="btn-pf" id="btn-manual-verify" type="button" style="margin-top:8px">Verify</button>
-    <div class="pf-verify-result" id="manual-verify-result" style="display:none"></div>
-  </details>
+  <h2 class="pf-title">Stake math (static books)</h2>
+  <p class="paytable-note">This build plays precomputed Stake Engine books. No Flask API. Spin picks a weighted outcome from the lookup table. Bonus Buy uses the 100× bonus mode.</p>
+  <p class="paytable-note">Upload package: <code>dist/</code> is the browser game. ACP math files are in <code>math/library/publish_files/</code>.</p>
 </section>
 
 <section class="paytable-panel">

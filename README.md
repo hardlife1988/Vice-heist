@@ -1,45 +1,46 @@
-# Vice Heist Slot
+# Vice Heist
 
-A **Stake Engine compatible** 5-reel, 3-row video slot game.
+5-reel, 3-row slot. Static Stake Engine package: precomputed books + browser frontend.
 
-## Game Features
-- 20 paylines
-- Free Spins (3+ Scatters)
-- Bonus Vault Pick Feature
-- Wild symbols
-- Max Win: **10,000x**
-- RTP: **96%**
+## Play it (Windows 10 / Codespaces)
 
-## Run on Windows 10 (GitHub Codespaces)
+No Python install needed.
 
-You do **not** need to install Python. Codespaces runs in your browser.
+1. Open this repo on GitHub
+2. **Code → Codespaces → Create codespace on main**
+3. Wait, then **Ports → globe on 5000**
+4. Do **not** open `127.0.0.1` in Windows Chrome
 
-1. Open [hardlife1988/Vice-heist](https://github.com/hardlife1988/Vice-heist)
-2. Click the green **Code** button
-3. Open the **Codespaces** tab
-4. Click **Create codespace on main** (or **Rebuild container** if you already have one open)
-5. Wait until the bottom status says Flask / pip is done
-6. When it asks about port **5000**, click **Open in Browser**
+Rebuild an old Codespace: **Ctrl+Shift+P → Rebuild Container**
 
-The game starts automatically (`python server.py`).
+Spin, bonus buy, and free spins run from bundled math books. No Flask.
 
-If you already had an old Codespace open, it will still be broken until you rebuild:
-**Ctrl+Shift+P** → type **Rebuild Container** → Enter.
+## What to upload to Stake ACP
 
-## Visuals and audio
-Neon Miami cabinet, staggered reel stops, win highlights, and Web Audio
-(spin, stop, win, scatter, bonus). Click the speaker to mute. Spacebar spins.
+Read [STAKE_UPLOAD.md](STAKE_UPLOAD.md).
 
-After a Codespace rebuild, hard-refresh the port 5000 tab (Ctrl+F5).
+| Folder | Upload as |
+|---|---|
+| `math/library/publish_files/` | **Math** |
+| `dist/index.html` + `style.css` + `game.js` | **Frontend** |
 
-## Files for Stake
-- `dist/` folder contains all static files needed for upload.
+Do **not** upload Flask `server.py`.
 
-## How to Test
-Open `dist/index.html` in browser, or use Codespaces as above.
+## Rebuild books
 
-## Deployment
-1. Upload `dist/` contents to Stake Engine ACP.
-2. Math simulation files are in `math/`.
+```bash
+python math/build_stake_bundle.py
+```
 
-Ready for review!
+Current equal-weight simulation (4000 base + 1200 bonus):
+
+- Base RTP ≈ 90.5% (free-spin hit rate ≈ 1%)
+- Bonus-buy EV ≈ 17× vs 100× cost (not optimized)
+
+Payouts use Stake units: **100 = 1.0× bet**.
+
+## Local static server
+
+```bash
+python -m http.server 5000 --directory dist
+```
