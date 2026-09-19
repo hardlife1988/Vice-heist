@@ -5,7 +5,9 @@
   "portsAttributes": {
     "5000": {
       "label": "Vice Heist game",
-      "onAutoForward": "openPreview"
+      "onAutoForward": "openPreview",
+      "visibility": "public",
+      "requireLocalPort": true
     }
   },
   "remoteEnv": {
