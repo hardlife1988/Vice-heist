@@ -1,22 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vice Heist Slot - Stake Engine</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vice Heist — Slot Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="game-container">
-        <h1>Vice Heist</h1>
-        <div id="reels" class="reels"></div>
-        <div class="controls">
-            <button id="spin">SPIN (1x)</button>
-            <button id="bonus-buy">Bonus Buy (100x)</button>
-            <div>Balance: <span id="balance">1000.00</span></div>
-        </div>
-        <div id="log"></div>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-glow" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="logo">
+    <span class="logo-vice">VICE</span>
+    <span class="logo-heist">HEIST</span>
+  </div>
+  <div class="header-meta">
+    <div class="chip">RTP 96%</div>
+    <div class="chip">MAX 10,000×</div>
+    <button class="btn-mute" id="btn-mute" type="button" aria-label="Toggle sound" title="Sound">🔊</button>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><span class="stat-label">BALANCE</span><span class="stat-value" id="balance">$1,000.00</span></div>
+    <div class="stat"><span class="stat-label">TOTAL WIN</span><span class="stat-value accent" id="total-win">$0.00</span></div>
+  </div>
+</header>
+
+<main class="game-wrapper">
+
+  <div class="win-banner" id="win-banner" style="display:none">
+    <span id="win-banner-text"></span>
+  </div>
+
+  <div class="free-spins-bar" id="free-spins-bar" style="display:none">
+    <span class="fs-icon">⚡</span> FREE SPINS REMAINING: <strong id="fs-count">0</strong>
+    <span class="fs-mult">×2 MULTIPLIER</span>
+  </div>
+
+  <div class="cabinet">
+    <div class="cabinet-lights" aria-hidden="true"></div>
+    <div class="reels-frame">
+      <div class="reels-grid" id="reels-grid"></div>
+      <div class="payline-center"></div>
+      <div class="scanlines" aria-hidden="true"></div>
     </div>
-    <script src="game.js"></script>
+  </div>
+
+  <div class="win-log" id="win-log">Press SPIN or Spacebar</div>
+
+  <div class="controls">
+    <div class="bet-controls">
+      <button class="btn-secondary" id="bet-down" type="button">−</button>
+      <div class="bet-display">
+        <span class="bet-label">BET</span>
+        <span id="bet-value">$1.00</span>
+      </div>
+      <button class="btn-secondary" id="bet-up" type="button">+</button>
+    </div>
+
+    <button class="btn-spin" id="btn-spin" type="button">SPIN</button>
+
+    <button class="btn-bonus" id="btn-bonus-buy" type="button" title="Instantly trigger Free Spins (100× bet)">
+      BONUS BUY<br><small id="bonus-cost">$100.00</small>
+    </button>
+  </div>
+
+  <div class="deposit-row">
+    <button class="btn-tiny" id="btn-deposit" type="button">+ Add $1,000 Demo Chips</button>
+    <span class="kbd-hint">Spacebar = Spin</span>
+  </div>
+
+</main>
+
+<section class="pf-panel">
+  <h2 class="pf-title">Provably Fair</h2>
+
+  <div class="pf-grid">
+    <div class="pf-field">
+      <label>Server Seed Hash <span class="pf-hint">(SHA-256 of secret seed)</span></label>
+      <input type="text" id="pf-server-seed-hash" readonly />
+    </div>
+
+    <div class="pf-field">
+      <label>Client Seed <span class="pf-hint">(changing rotates server seed)</span></label>
+      <div class="pf-row">
+        <input type="text" id="pf-client-seed" />
+        <button class="btn-pf" id="btn-update-seed" type="button">Update</button>
+      </div>
+    </div>
+
+    <div class="pf-field">
+      <label>Nonce <span class="pf-hint">(increments each spin)</span></label>
+      <input type="text" id="pf-nonce" readonly />
+    </div>
+  </div>
+
+  <div class="pf-reveal" id="pf-reveal" style="display:none">
+    <h3>Previous Server Seed (Revealed)</h3>
+    <p class="pf-note">Your previous server seed has been revealed. You can now verify any spin from that session.</p>
+    <div class="pf-field">
+      <label>Revealed Server Seed</label>
+      <input type="text" id="pf-revealed-seed" readonly />
+    </div>
+    <button class="btn-pf" id="btn-verify-last" type="button">Verify Last Spin</button>
+    <div class="pf-verify-result" id="pf-verify-result" style="display:none"></div>
+  </div>
+
+  <details class="pf-manual">
+    <summary>Manual Verification</summary>
+    <div class="pf-grid" style="margin-top:12px">
+      <div class="pf-field">
+        <label>Server Seed</label>
+        <input type="text" id="v-server-seed" placeholder="Paste revealed server seed" />
+      </div>
+      <div class="pf-field">
+        <label>Client Seed</label>
+        <input type="text" id="v-client-seed" placeholder="Client seed used" />
+      </div>
+      <div class="pf-field">
+        <label>Nonce</label>
+        <input type="number" id="v-nonce" placeholder="0" min="0" />
+      </div>
+      <div class="pf-field">
+        <label>Reel Grid (JSON — 3×5 array of symbol codes)</label>
+        <input type="text" id="v-grid" placeholder='[["W","D","R","E","H"],["C","G","R","D","P"],["R","E","B","R","C"]]' />
+      </div>
+    </div>
+    <button class="btn-pf" id="btn-manual-verify" type="button" style="margin-top:8px">Verify</button>
+    <div class="pf-verify-result" id="manual-verify-result" style="display:none"></div>
+  </details>
+</section>
+
+<section class="paytable-panel">
+  <h2 class="pf-title">Paytable</h2>
+  <table class="paytable">
+    <thead>
+      <tr><th>Symbol</th><th>3×</th><th>4×</th><th>5×</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="pt-ico">🃏</span> Wild</td><td>0.64×</td><td>4.28×</td><td>79.5×</td></tr>
+      <tr><td><span class="pt-ico">📚</span> Book</td><td>0.27×</td><td>1.60×</td><td>16×</td></tr>
+      <tr><td><span class="pt-ico">🪙</span> Gold Bar</td><td>0.13×</td><td>0.80×</td><td>7.43×</td></tr>
+      <tr><td><span class="pt-ico">💎</span> Diamond</td><td>0.11×</td><td>0.58×</td><td>4.79×</td></tr>
+      <tr><td><span class="pt-ico">🔴</span> Ruby</td><td>0.09×</td><td>0.43×</td><td>3.19×</td></tr>
+      <tr><td><span class="pt-ico">💚</span> Emerald</td><td>0.06×</td><td>0.30×</td><td>2.13×</td></tr>
+      <tr><td><span class="pt-ico">♣</span> Club</td><td>0.04×</td><td>0.15×</td><td>1.06×</td></tr>
+      <tr><td><span class="pt-ico">♠</span> Spade</td><td>0.03×</td><td>0.11×</td><td>0.64×</td></tr>
+      <tr><td><span class="pt-ico">♥</span> Heart</td><td>0.03×</td><td>0.11×</td><td>0.64×</td></tr>
+      <tr class="scatter-row"><td><span class="pt-ico">📖</span> Scatter</td><td colspan="3">3+ anywhere → 10 Free Spins at 2× · 3/4/5 pay 2× / 5× / 10× bet</td></tr>
+    </tbody>
+  </table>
+  <p class="paytable-note">Wins pay left to right on 20 paylines. Wild substitutes all except Scatter. Max win: 10,000× bet.</p>
+</section>
+
+<script src="game.js"></script>
 </body>
 </html>

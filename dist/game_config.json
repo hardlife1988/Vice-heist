@@ -1,6 +1,6 @@
 {
-  "name": "Vice Heist",
-  "rtp": 0.96,
-  "max_win": 10000,
-  "status": "ready_for_stake"
+  "gameName": "Vice Heist",
+  "rtp": 81.16,
+  "maxWin": 10000,
+  "paylines": 20
 }

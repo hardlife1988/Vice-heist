@@ -1,0 +1,10 @@
+{
+  "gameName": "Vice Heist",
+  "mode": "base",
+  "spins": 20000,
+  "rtp": 0.811592,
+  "maxWin": 10000,
+  "lookupTable": "lookUpTable_base.csv",
+  "books": "books_base.jsonl",
+  "note": "Demo LUT/books from the Flask math engine. Stake ACP still requires official math-sdk books + web-sdk frontend."
+}

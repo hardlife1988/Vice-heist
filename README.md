@@ -26,6 +26,12 @@ The game starts automatically (`python server.py`).
 If you already had an old Codespace open, it will still be broken until you rebuild:
 **Ctrl+Shift+P** → type **Rebuild Container** → Enter.
 
+## Visuals and audio
+Neon Miami cabinet, staggered reel stops, win highlights, and Web Audio
+(spin, stop, win, scatter, bonus). Click the speaker to mute. Spacebar spins.
+
+After a Codespace rebuild, hard-refresh the port 5000 tab (Ctrl+F5).
+
 ## Files for Stake
 - `dist/` folder contains all static files needed for upload.
 
