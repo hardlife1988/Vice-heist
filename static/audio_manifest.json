@@ -1,0 +1,14 @@
+{
+  "baseLoop": ["audio/base-loop.mp3", "audio/base-loop.ogg"],
+  "reelStop": ["audio/reel-stop.mp3", "audio/reel-stop.ogg"],
+  "win": ["audio/win.mp3", "audio/win.ogg"],
+  "scatter": ["audio/scatter.mp3", "audio/scatter.ogg"],
+  "nearMiss": ["audio/near-miss.mp3", "audio/near-miss.ogg"],
+  "bonus": ["audio/bonus.mp3", "audio/bonus.ogg"],
+  "policeSiren": ["audio/police-siren.mp3", "audio/police-siren.ogg"],
+  "notes": {
+    "music": "30–60 second seamless synthwave loop; 120–140 BPM",
+    "ducking": "Reduce music to approximately 30% during spins",
+    "compatibility": "Provide both MP3 and OGG; Safari/iOS should use MP3"
+  }
+}
