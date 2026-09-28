@@ -1,0 +1,30 @@
+{
+  "status": "prototype extracted from approved concept sheet; dark backgrounds remain; not final transparent artwork",
+  "symbols": {
+    "female_leader": "assets/symbols/female_leader.webp",
+    "male_thief": "assets/symbols/male_thief.webp",
+    "wild": "assets/symbols/wild.webp",
+    "scatter": "assets/symbols/scatter.webp",
+    "cash": "assets/symbols/cash.webp",
+    "gold_bars": "assets/symbols/gold_bars.webp",
+    "diamond": "assets/symbols/diamond.webp",
+    "sports_car": "assets/symbols/sports_car.webp",
+    "skull_king": "assets/symbols/skull_king.webp",
+    "open_safe": "assets/symbols/open_safe.webp",
+    "pink_gem": "assets/symbols/pink_gem.webp",
+    "ace": "assets/symbols/ace.webp",
+    "king": "assets/symbols/king.webp",
+    "queen": "assets/symbols/queen.webp",
+    "jack": "assets/symbols/jack.webp",
+    "ten": "assets/symbols/ten.webp"
+  },
+  "backgrounds": {
+    "city": "assets/backgrounds/city_concept.webp",
+    "vault": "assets/backgrounds/vault_concept.webp"
+  },
+  "ui": {
+    "logo": "assets/ui/logo_concept.webp",
+    "reel_frame": "assets/ui/reel_frame_concept.webp"
+  },
+  "math_mapping": "PENDING: map to actual paytable/reel IDs before gameplay integration"
+}
