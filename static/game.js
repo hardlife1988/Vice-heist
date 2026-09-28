@@ -5,6 +5,18 @@ const SYMBOL_EMOJI = {
   W: '🃏', S: '📖', B: '📚', G: '🪙',
   D: '💎', R: '🔴', E: '💚', C: '♣', P: '♠', H: '♥',
 };
+const SYMBOL_ASSETS = {
+  "W": "assets/symbols/wild.webp",
+  "S": "assets/symbols/scatter.webp",
+  "B": "assets/symbols/open_safe.webp",
+  "G": "assets/symbols/gold_bars.webp",
+  "D": "assets/symbols/diamond.webp",
+  "R": "assets/symbols/pink_gem.webp",
+  "E": "assets/symbols/cash.webp",
+  "C": "assets/symbols/king.webp",
+  "P": "assets/symbols/ace.webp",
+  "H": "assets/symbols/queen.webp"
+};
 const SYMBOL_NAME = {
   W: 'Wild', S: 'Scatter', B: 'Book', G: 'Gold',
   D: 'Diamond', R: 'Ruby', E: 'Emerald', C: 'Club', P: 'Spade', H: 'Heart',
@@ -46,6 +58,24 @@ const $btnBonusBuy = $('btn-bonus-buy');
 const $btnDeposit = $('btn-deposit');
 const $btnMute = $('btn-mute');
 
+const SAMPLE_PATHS = {
+  reelStop: 'assets/audio/reel_stop.wav',
+  scatter: 'assets/audio/scatter.wav',
+  bonus: 'assets/audio/bonus.wav',
+  win: 'assets/audio/win.wav',
+  click: 'assets/audio/reel_stop.wav'
+};
+const SAMPLE_AUDIO = {};
+function playSample(name) {
+  if (state.muted || !SAMPLE_PATHS[name]) return false;
+  try {
+    const sample = SAMPLE_AUDIO[name] || (SAMPLE_AUDIO[name] = new Audio(SAMPLE_PATHS[name]));
+    const voice = sample.cloneNode();
+    voice.volume = name === 'click' ? 0.12 : 0.42;
+    voice.play().catch(() => {});
+    return true;
+  } catch (_) { return false; }
+}
 const AudioFX = {
   ctx: null, spinning: false, spinTimer: null,
   unlock() {
@@ -68,17 +98,19 @@ const AudioFX = {
     o.connect(g); g.connect(this.ctx.destination);
     o.start(t); o.stop(t + dur);
   },
-  click() { this.unlock(); this.beep(420, 0.05, 'square', 0.04); },
-  reelStop() { this.unlock(); this.beep(180, 0.08, 'triangle', 0.07); },
-  scatter() { this.unlock(); this.beep(880, 0.18, 'sine', 0.06); this.beep(1320, 0.22, 'sine', 0.04, 0.08); },
+  click() { this.unlock(); if (!playSample('click')) this.beep(420, 0.05, 'square', 0.04); },
+  reelStop() { this.unlock(); if (!playSample('reelStop')) this.beep(180, 0.08, 'triangle', 0.07); },
+  scatter() { this.unlock(); if (!playSample('scatter')) { this.beep(880, 0.18, 'sine', 0.06); this.beep(1320, 0.22, 'sine', 0.04, 0.08); } },
   win(amount, bet) {
     this.unlock();
+    if (playSample('win')) return;
     this.beep(520, 0.12, 'triangle', 0.06);
     this.beep(780, 0.16, 'triangle', 0.05, 0.08);
     if (amount >= bet * 5) this.beep(1040, 0.28, 'sawtooth', 0.04, 0.16);
   },
   bonus() {
     this.unlock();
+    if (playSample('bonus')) return;
     [523, 659, 784, 1046].forEach((f, i) => this.beep(f, 0.2, 'triangle', 0.05, i * 0.09));
   },
 };
@@ -128,7 +160,29 @@ function paintCell(row, reel, sym, extraClass) {
   cell.dataset.sym = code;
   cell.classList.remove('win-cell', 'spinning', 'landed');
   if (extraClass) cell.classList.add(extraClass);
-  cell.innerHTML = `<span class="sym-ico">${SYMBOL_EMOJI[code] || code}</span><span class="sym-name">${SYMBOL_NAME[code] || ''}</span>`;
+  const imagePath = SYMBOL_ASSETS[code];
+  cell.replaceChildren();
+  if (imagePath) {
+    const img = document.createElement('img');
+    img.className = 'sym-image';
+    img.src = imagePath;
+    img.alt = SYMBOL_NAME[code] || code;
+    img.loading = 'eager';
+    img.decoding = 'async';
+    img.onerror = () => {
+      img.replaceWith(document.createTextNode(SYMBOL_EMOJI[code] || code));
+    };
+    cell.appendChild(img);
+  } else {
+    const icon = document.createElement('span');
+    icon.className = 'sym-ico';
+    icon.textContent = SYMBOL_EMOJI[code] || code;
+    cell.appendChild(icon);
+  }
+  const name = document.createElement('span');
+  name.className = 'sym-name';
+  name.textContent = SYMBOL_NAME[code] || '';
+  cell.appendChild(name);
 }
 
 function highlightWins(positions) {
@@ -342,3 +396,6 @@ async function init() {
 }
 
 init();
+/* Vice Heist — Stake book player (static, no Flask) */
+
+
