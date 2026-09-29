@@ -1,54 +1,131 @@
-"""Run with: python -m unittest discover -s tests -v"""
-import sys
-import unittest
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "math"))
-from game_config import GameConfig
-from paytable import Symbol
-from win_evaluator import WinEvaluator
+"""Evaluate Vice Heist paylines, scatters, and free-spin triggers."""
 
-W, G, S, H = Symbol.WILD, Symbol.GOLD_BAR, Symbol.SCATTER, Symbol.HEART
+from paytable import Paytable, Symbol
 
 
-def grid_with_middle_line(symbols):
-    grid = [[H] * 5 for _ in range(3)]
-    grid[1] = symbols
-    return grid
+class WinEvaluator:
+    """Evaluates wins from a three-row, five-reel grid."""
 
+    def __init__(self, config):
+        self.config = config
 
-class WinEvaluatorTests(unittest.TestCase):
-    def setUp(self):
-        self.evaluator = WinEvaluator(GameConfig())
+    def evaluate_spin(
+        self,
+        reel_grid: list,
+        total_bet: float,
+        multiplier: float = 1.0,
+    ) -> dict:
+        """Evaluate all paylines and scatter wins for one spin."""
+        if (
+            len(reel_grid) != 3
+            or any(len(row) != 5 for row in reel_grid)
+        ):
+            raise ValueError("Reel grid must have 3 rows and 5 reels")
 
-    def test_leading_wilds_choose_highest_pay(self):
-        line = [W, W, W, G, G]
-        result = self.evaluator._evaluate_payline(
-            grid_with_middle_line(line), [1] * 5, 1, 1
+        if total_bet <= 0 or multiplier <= 0:
+            raise ValueError("Bet and multiplier must be positive")
+
+        total_win = 0.0
+        payline_wins = []
+
+        for line_num in range(1, self.config.paylines + 1):
+            payline = Paytable.get_payline(line_num)
+            if not payline:
+                continue
+
+            result = self._evaluate_payline(
+                reel_grid, payline, total_bet, multiplier
+            )
+
+            if result is not None and result["win"] > 0:
+                result["payline"] = line_num
+                total_win += result["win"]
+                payline_wins.append(result)
+
+        scatter_count = self._count_scatters(reel_grid)
+        triggers_free_spins = (
+            scatter_count >= self.config.free_spins_trigger
         )
-        self.assertEqual(result["symbol_key"], "G")
-        self.assertEqual(result["count"], 5)
-        self.assertEqual(result["win"], 7.43)
 
-    def test_all_wild_line(self):
-        result = self.evaluator._evaluate_payline(
-            grid_with_middle_line([W] * 5), [1] * 5, 1, 1
+        scatter_win = 0.0
+        if triggers_free_spins:
+            scatter_multiplier = {
+                3: 2,
+                4: 5,
+                5: 10,
+            }.get(min(scatter_count, 5), 0)
+
+            scatter_win = round(
+                scatter_multiplier * total_bet * multiplier, 4
+            )
+            total_win += scatter_win
+
+        return {
+            "total_win": round(total_win, 4),
+            "payline_wins": payline_wins,
+            "scatter_count": scatter_count,
+            "triggers_free_spins": triggers_free_spins,
+            "scatter_win": scatter_win,
+        }
+
+    def _evaluate_payline(
+        self,
+        reel_grid: list,
+        payline: list,
+        total_bet: float,
+        multiplier: float,
+    ) -> dict | None:
+        """Choose the highest-paying valid Wild substitution."""
+        if len(payline) != 5 or any(
+            not isinstance(row, int) or row not in (0, 1, 2)
+            for row in payline
+        ):
+            raise ValueError("Payline must contain five row indices")
+
+        line_symbols = [
+            reel_grid[payline[reel]][reel]
+            for reel in range(5)
+        ]
+
+        best_result = None
+
+        # A Wild can represent itself or any regular paying symbol.
+        # Evaluate each interpretation and retain the highest payout.
+        for target in Symbol:
+            if target == Symbol.SCATTER:
+                continue
+
+            count = 0
+            for symbol in line_symbols:
+                if symbol == target or symbol == Symbol.WILD:
+                    count += 1
+                else:
+                    break
+
+            if count < 3:
+                continue
+
+            win = Paytable.calculate_win(
+                target, count, total_bet, multiplier
+            )
+            if win <= 0:
+                continue
+
+            if best_result is None or win > best_result["win"]:
+                best_result = {
+                    "symbol": Paytable.get_symbol_name(target),
+                    "symbol_key": target.value,
+                    "count": count,
+                    "win": win,
+                }
+
+        return best_result
+
+    @staticmethod
+    def _count_scatters(reel_grid: list) -> int:
+        return sum(
+            symbol == Symbol.SCATTER
+            for row in reel_grid
+            for symbol in row
         )
-        self.assertEqual(result["symbol_key"], "W")
-        self.assertEqual(result["win"], 79.5)
-
-    def test_scatter_triggers(self):
-        grid = [[H] * 5 for _ in range(3)]
-        grid[0][0] = grid[0][1] = grid[0][2] = S
-        result = self.evaluator.evaluate_spin(grid, 1)
-        self.assertEqual(result["scatter_count"], 3)
-        self.assertEqual(result["scatter_win"], 2)
-        self.assertTrue(result["triggers_free_spins"])
-
-    def test_invalid_grid(self):
-        with self.assertRaises(ValueError):
-            self.evaluator.evaluate_spin([[H] * 5], 1)
-
-
-if __name__ == "__main__":
-    unittest.main()
