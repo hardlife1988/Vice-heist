@@ -1,4 +1,3 @@
-
 """Evaluate Vice Heist paylines, scatters, and free-spin triggers."""
 
 from paytable import Paytable, Symbol
