@@ -35,6 +35,7 @@ from game_config import GameConfig  # noqa: E402
 from reel_engine import ReelEngine  # noqa: E402
 from win_evaluator import WinEvaluator  # noqa: E402
 from paytable import Paytable  # noqa: E402
+from calibrate_lut import calibrate, weighted_rtp, effective_book_count  # noqa: E402
 
 
 def to_cents(amount: float) -> int:
@@ -215,11 +216,11 @@ class BookBuilder:
         }
 
 
-def write_lut(path: str, books: list) -> None:
+def write_lut(path: str, books: list, weights: list[int]) -> None:
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
-        for b in books:
-            w.writerow([b["id"], 1, b["payoutMultiplier"]])
+        for b, weight in zip(books, weights):
+            w.writerow([b["id"], weight, b["payoutMultiplier"]])
 
 
 def write_jsonl(path: str, books: list) -> None:
@@ -264,23 +265,25 @@ def main() -> None:
     base_books = [builder.build_round(i, "base") for i in range(1, n_base + 1)]
     bonus_books = [builder.build_round(i, "bonus") for i in range(1, n_bonus + 1)]
 
-    def rtp(books, cost):
-        if not books:
-            return 0.0
-        return sum(b["payoutMultiplier"] for b in books) / (len(books) * cost * 100.0)
+    # Calibrate actual generated outcomes, not the metadata.
+    base_weights, base_rtp = calibrate(base_books, cost=1.0)
+    bonus_weights, bonus_rtp = calibrate(bonus_books, cost=100.0)
+    fs_rate = sum(w for b, w in zip(base_books, base_weights) if b["criteria"] == "freegame") / sum(base_weights)
 
-    base_rtp = rtp(base_books, 1.0)
-    bonus_rtp = rtp(bonus_books, 100.0)
-    fs_rate = sum(1 for b in base_books if b["criteria"] == "freegame") / len(base_books)
+    print(f"Base weighted RTP:       {base_rtp*100:.4f}%")
+    print(f"Bonus weighted RTP:      {bonus_rtp*100:.4f}% (100x cost)")
+    print(f"Base free-spin hit rate: {fs_rate*100:.2f}% (weighted books)")
+    print(f"Base effective books:    {effective_book_count(base_weights):.1f}/{len(base_books)}")
+    print(f"Bonus effective books:   {effective_book_count(bonus_weights):.1f}/{len(bonus_books)}")
+    if effective_book_count(base_weights) < len(base_books) * 0.05:
+        print("WARNING: Base LUT is highly concentrated; generate more varied outcomes.")
+    if effective_book_count(bonus_weights) < len(bonus_books) * 0.05:
+        print("WARNING: Bonus LUT is highly concentrated; generate more varied outcomes.")
 
-    print(f"Base RTP (equal weights): {base_rtp*100:.2f}%")
-    print(f"Bonus RTP vs 100x cost:   {bonus_rtp*100:.2f}%")
-    print(f"Base free-spin hit rate:  {fs_rate*100:.2f}%")
-
-    write_lut(os.path.join(OUT, "lookUpTable_base.csv"), base_books)
-    write_lut(os.path.join(OUT, "lookUpTable_bonus.csv"), bonus_books)
-    write_lut(os.path.join(DIST, "lookUpTable_base.csv"), base_books)
-    write_lut(os.path.join(DIST, "lookUpTable_bonus.csv"), bonus_books)
+    write_lut(os.path.join(OUT, "lookUpTable_base.csv"), base_books, base_weights)
+    write_lut(os.path.join(OUT, "lookUpTable_bonus.csv"), bonus_books, bonus_weights)
+    write_lut(os.path.join(DIST, "lookUpTable_base.csv"), base_books, base_weights)
+    write_lut(os.path.join(DIST, "lookUpTable_bonus.csv"), bonus_books, bonus_weights)
 
     base_jsonl = os.path.join(OUT, "books_base.jsonl")
     bonus_jsonl = os.path.join(OUT, "books_bonus.jsonl")
