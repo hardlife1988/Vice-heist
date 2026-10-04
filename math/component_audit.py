@@ -68,7 +68,7 @@ def main():
 
             for _ in range(config.free_spins_count):
                 fs_grid = engine.spin_reels(
-                    mode="bonus"
+                    mode="natural_bonus"
                 )
 
                 fs_result = evaluator.evaluate_spin(
@@ -91,7 +91,7 @@ def main():
     # ------------------------------------------------------------
 
     for i in range(1, ROUNDS + 1):
-        grid = engine.spin_reels(mode="bonus")
+        grid = engine.spin_reels(mode="bonus_buy")
 
         result = evaluator.evaluate_spin(
             grid,

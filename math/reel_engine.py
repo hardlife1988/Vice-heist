@@ -86,11 +86,17 @@ class ReelWeights:
         },
     ]
 
-    # Bonus/free-spin distribution.
+    # Natural free-spin distribution.
     #
-    # The increased Wild frequency is the starting calibration for the
-    # 10-spin, 2x-multiplier feature. The generated bundle remains the
-    # authority for measured RTP.
+    # Natural free spins are intentionally separated from the purchased
+    # Bonus Buy feature so the base-game RTP can be calibrated independently.
+    # Start with the base distribution; tune only after component auditing.
+    NATURAL_BONUS_REELS = BASE_REELS
+
+    # Purchased Bonus Buy distribution.
+    #
+    # Keep the existing high-Wild distribution unchanged while the natural
+    # feature is calibrated independently.
     BONUS_REELS = [
         {
             Symbol.WILD: 31,
@@ -161,7 +167,9 @@ class ReelWeights:
     def for_mode(cls, mode: str):
         if mode == "base":
             return cls.BASE_REELS
-        if mode == "bonus":
+        if mode == "natural_bonus":
+            return cls.NATURAL_BONUS_REELS
+        if mode in ("bonus", "bonus_buy"):
             return cls.BONUS_REELS
         raise ValueError(f"Unknown reel mode: {mode!r}")
 

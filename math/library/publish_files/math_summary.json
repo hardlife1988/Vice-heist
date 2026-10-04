@@ -1,15 +1,15 @@
 {
   "gameName": "Vice Heist",
-  "rtpBase": 95.97,
-  "rtpBonus": 95.98,
-  "rawRtpBase": 155.1397,
-  "rawRtpBonus": 98.7419,
+  "rtpBase": 95.82,
+  "rtpBonus": 95.99,
+  "rawRtpBase": 92.219,
+  "rawRtpBonus": 98.3927,
   "maxWin": 10000,
   "paylines": 20,
   "baseBooks": 4000,
   "bonusBooks": 1200,
-  "freeSpinHitRate": 0.0038,
-  "baseEffectiveBooks": 3989.2,
-  "bonusEffectiveBooks": 1199.2,
+  "freeSpinHitRate": 0.0099,
+  "baseEffectiveBooks": 3999.6,
+  "bonusEffectiveBooks": 1199.4,
   "payoutUnit": "100 = 1.0x bet"
 }

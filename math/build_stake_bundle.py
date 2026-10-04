@@ -178,14 +178,15 @@ class BookBuilder:
         self,
         events: list,
         total_fs: int,
+        reel_mode: str,
     ) -> float:
-        """Run free spins using the dedicated bonus reel distribution."""
+        """Run free spins using the requested feature reel distribution."""
         free_win = 0.0
 
         for i in range(total_fs):
             grid, result = self._spin(
                 self.config.free_spins_multiplier,
-                reel_mode="bonus",
+                reel_mode=reel_mode,
             )
 
             free_win += result["total_win"]
@@ -238,6 +239,7 @@ class BookBuilder:
             free_win = self._run_free_spins(
                 events,
                 total_fs,
+                reel_mode="bonus_buy",
             )
             total += free_win
 
@@ -280,6 +282,7 @@ class BookBuilder:
                 free_win = self._run_free_spins(
                     events,
                     total_fs,
+                    reel_mode="natural_bonus",
                 )
                 total += free_win
 
