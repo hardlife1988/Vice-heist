@@ -400,21 +400,59 @@ body {
   .logo-vice { font-size: 2rem; }
 }
 
-/* Cyberpunk integration: concept assets retain their dark image backgrounds. */
+/* Vice Heist Cyberpunk Integration */
+
 body::before {
-  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-  background:linear-gradient(180deg,rgba(4,3,17,.40),rgba(4,3,17,.86)),
-    url('assets/backgrounds/city_concept.webp') center top / cover no-repeat;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(4,3,17,.40),
+      rgba(4,3,17,.86)
+    ),
+    url("assets/backgrounds/city_concept.webp")
+      center top / cover no-repeat;
 }
-.reel-cell { padding:3px; }
-.reel-cell .sym-image { display:block; width:100%; height:calc(100% - 14px);
-  object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,43,214,.32)); }
-.reel-cell.win-cell .sym-image { animation:vh-neon-win 750ms ease-in-out infinite alternate; }
+
+.reel-cell {
+  padding: 3px;
+}
+
+.reel-cell .sym-image {
+  display: block;
+  width: 100%;
+  height: calc(100% - 14px);
+  object-fit: contain;
+  filter: drop-shadow(
+    0 0 6px rgba(255,43,214,.32)
+  );
+}
+
+.reel-cell.win-cell .sym-image {
+  animation: vh-neon-win 750ms
+    ease-in-out infinite alternate;
+}
+
 @keyframes vh-neon-win {
-  from {filter:drop-shadow(0 0 3px #2ee6ff) brightness(1)}
-  to {filter:drop-shadow(0 0 13px #ff2bd6) brightness(1.35)}
+  from {
+    filter: drop-shadow(0 0 3px #2ee6ff)
+      brightness(1);
+  }
+  to {
+    filter: drop-shadow(0 0 13px #ff2bd6)
+      brightness(1.35);
+  }
 }
-@media (prefers-reduced-motion:reduce) {
-  .reel-cell.win-cell .sym-image {animation:none}
-  .cabinet-lights,.reel-cell.spinning,.reel-cell.landed {animation:none}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel-cell.win-cell .sym-image,
+  .cabinet-lights,
+  .reel-cell.spinning,
+  .reel-cell.landed {
+    animation: none;
+  }
 }
