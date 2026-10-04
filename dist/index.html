@@ -2,108 +2,500 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#08020f" />
+
   <title>Vice Heist — Slot Game</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-<div class="bg-grid" aria-hidden="true"></div>
-<div class="bg-glow" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
 
-<header class="site-header">
-  <div class="logo">
-    <span class="logo-vice">VICE</span>
-    <span class="logo-heist">HEIST</span>
-  </div>
-  <div class="header-meta">
-    <div class="chip">RTP 96%</div>
-    <div class="chip">MAX 10,000×</div>
-    <button class="btn-mute" id="btn-mute" type="button" aria-label="Toggle sound" title="Sound">🔊</button>
-  </div>
-  <div class="header-stats">
-    <div class="stat"><span class="stat-label">BALANCE</span><span class="stat-value" id="balance">$1,000.00</span></div>
-    <div class="stat"><span class="stat-label">TOTAL WIN</span><span class="stat-value accent" id="total-win">$0.00</span></div>
-  </div>
-</header>
+  <main class="game-shell">
 
-<main class="game-wrapper">
+    <!-- =====================================================
+         TOP BAR
+         ===================================================== -->
+    <header class="game-header">
 
-  <div class="win-banner" id="win-banner" style="display:none">
-    <span id="win-banner-text"></span>
-  </div>
-
-  <div class="free-spins-bar" id="free-spins-bar" style="display:none">
-    <span class="fs-icon">⚡</span> FREE SPINS REMAINING: <strong id="fs-count">0</strong>
-    <span class="fs-mult">×2 MULTIPLIER</span>
-  </div>
-
-  <div class="cabinet">
-    <div class="cabinet-lights" aria-hidden="true"></div>
-    <div class="reels-frame">
-      <div class="reels-grid" id="reels-grid"></div>
-      <div class="payline-center"></div>
-      <div class="scanlines" aria-hidden="true"></div>
-    </div>
-  </div>
-
-  <div class="win-log" id="win-log">Press SPIN or Spacebar</div>
-
-  <div class="controls">
-    <div class="bet-controls">
-      <button class="btn-secondary" id="bet-down" type="button">−</button>
-      <div class="bet-display">
-        <span class="bet-label">BET</span>
-        <span id="bet-value">$1.00</span>
+      <div class="header-badge header-badge-rtp">
+        <span class="badge-label">RTP</span>
+        <strong>96%</strong>
       </div>
-      <button class="btn-secondary" id="bet-up" type="button">+</button>
+
+      <div class="logo" aria-label="Vice Heist">
+        <span class="logo-vice">VICE</span>
+        <span class="logo-heist">HEIST</span>
+      </div>
+
+      <div class="header-badge header-badge-max">
+        <span class="badge-label">MAX</span>
+        <strong>10,000×</strong>
+      </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         WIN BANNER
+         ===================================================== -->
+    <div
+      class="win-banner"
+      id="win-banner"
+      style="display:none"
+      aria-live="polite"
+    >
+      <span id="win-banner-text"></span>
     </div>
 
-    <button class="btn-spin" id="btn-spin" type="button">SPIN</button>
 
-    <button class="btn-bonus" id="btn-bonus-buy" type="button" title="Instantly trigger Free Spins (100× bet)">
-      BONUS BUY<br><small id="bonus-cost">$100.00</small>
-    </button>
-  </div>
+    <!-- =====================================================
+         FREE SPINS STATUS
+         ===================================================== -->
+    <div
+      class="free-spins-bar"
+      id="free-spins-bar"
+      style="display:none"
+      aria-live="polite"
+    >
+      <span class="fs-icon">⚡</span>
 
-  <div class="deposit-row">
-    <button class="btn-tiny" id="btn-deposit" type="button">+ Add $1,000 Demo Chips</button>
-    <span class="kbd-hint">Spacebar = Spin</span>
-  </div>
+      <span>
+        FREE SPINS
+        <strong id="fs-count">0</strong>
+      </span>
 
-</main>
+      <span class="fs-mult">
+        ×2 MULTIPLIER
+      </span>
+    </div>
 
-<section class="pf-panel">
-  <h2 class="pf-title">Stake math (static books)</h2>
-  <p class="paytable-note">This build plays precomputed Stake Engine books. No Flask API. Spin picks a weighted outcome from the lookup table. Bonus Buy uses the 100× bonus mode.</p>
-  <p class="paytable-note">Upload package: <code>dist/</code> is the browser game. ACP math files are in <code>math/library/publish_files/</code>.</p>
-</section>
 
-<section class="paytable-panel">
-  <h2 class="pf-title">Paytable</h2>
-  <table class="paytable">
-    <thead>
-      <tr><th>Symbol</th><th>3×</th><th>4×</th><th>5×</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><span class="pt-ico">🃏</span> Wild</td><td>0.64×</td><td>4.28×</td><td>79.5×</td></tr>
-      <tr><td><span class="pt-ico">📚</span> Book</td><td>0.27×</td><td>1.60×</td><td>16×</td></tr>
-      <tr><td><span class="pt-ico">🪙</span> Gold Bar</td><td>0.13×</td><td>0.80×</td><td>7.43×</td></tr>
-      <tr><td><span class="pt-ico">💎</span> Diamond</td><td>0.11×</td><td>0.58×</td><td>4.79×</td></tr>
-      <tr><td><span class="pt-ico">🔴</span> Ruby</td><td>0.09×</td><td>0.43×</td><td>3.19×</td></tr>
-      <tr><td><span class="pt-ico">💚</span> Emerald</td><td>0.06×</td><td>0.30×</td><td>2.13×</td></tr>
-      <tr><td><span class="pt-ico">♣</span> Club</td><td>0.04×</td><td>0.15×</td><td>1.06×</td></tr>
-      <tr><td><span class="pt-ico">♠</span> Spade</td><td>0.03×</td><td>0.11×</td><td>0.64×</td></tr>
-      <tr><td><span class="pt-ico">♥</span> Heart</td><td>0.03×</td><td>0.11×</td><td>0.64×</td></tr>
-      <tr class="scatter-row"><td><span class="pt-ico">📖</span> Scatter</td><td colspan="3">3+ anywhere → 10 Free Spins at 2× · 3/4/5 pay 2× / 5× / 10× bet</td></tr>
-    </tbody>
-  </table>
-  <p class="paytable-note">Wins pay left to right on 20 paylines. Wild substitutes all except Scatter. Max win: 10,000× bet.</p>
-</section>
+    <!-- =====================================================
+         MAIN CABINET
+         ===================================================== -->
+    <section class="cabinet">
 
-<script src="game.js"></script>
+      <div class="cabinet-glow" aria-hidden="true"></div>
+
+      <!-- REELS -->
+      <div class="reels-frame">
+
+        <div
+          class="reels-grid"
+          id="reels-grid"
+          aria-label="Vice Heist slot reels"
+        ></div>
+
+        <div class="payline-center" aria-hidden="true"></div>
+
+        <div class="scanlines" aria-hidden="true"></div>
+
+      </div>
+
+
+      <!-- ===================================================
+           RIGHT CONTROL RAIL
+           =================================================== -->
+      <aside class="control-rail">
+
+        <!-- MUTE -->
+        <button
+          class="btn-mute"
+          id="btn-mute"
+          type="button"
+          aria-label="Toggle sound"
+          title="Sound"
+        >
+          🔊
+        </button>
+
+
+        <!-- BET -->
+        <div class="rail-section rail-bet">
+
+          <div class="rail-icon">
+            <span>−</span>
+            <span class="coin-icon">●</span>
+            <span>+</span>
+          </div>
+
+          <span class="rail-label">BET</span>
+
+          <div class="bet-controls">
+
+            <button
+              class="btn-secondary"
+              id="bet-down"
+              type="button"
+              aria-label="Decrease bet"
+            >
+              −
+            </button>
+
+            <div class="bet-display">
+              <span class="bet-label">TOTAL BET</span>
+              <span id="bet-value">$1.00</span>
+            </div>
+
+            <button
+              class="btn-secondary"
+              id="bet-up"
+              type="button"
+              aria-label="Increase bet"
+            >
+              +
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- SPIN -->
+        <button
+          class="btn-spin"
+          id="btn-spin"
+          type="button"
+          aria-label="Spin"
+        >
+          <span class="spin-arrow">↻</span>
+          <span class="spin-text">SPIN</span>
+        </button>
+
+
+        <!-- BONUS BUY -->
+        <button
+          class="btn-bonus"
+          id="btn-bonus-buy"
+          type="button"
+          title="Instantly trigger Free Spins (100× bet)"
+        >
+          <span class="bonus-title">BONUS BUY</span>
+          <small id="bonus-cost">$100.00</small>
+        </button>
+
+
+        <!-- TURBO VISUAL CONTROL -->
+        <button
+          class="btn-turbo"
+          id="btn-turbo"
+          type="button"
+          aria-label="Turbo mode"
+          title="Turbo"
+        >
+          <span class="turbo-icon">⚡</span>
+          <span>TURBO</span>
+        </button>
+
+      </aside>
+
+    </section>
+
+
+    <!-- =====================================================
+         WIN MESSAGE
+         ===================================================== -->
+    <div
+      class="win-log"
+      id="win-log"
+      aria-live="polite"
+    >
+      Press SPIN or Spacebar
+    </div>
+
+
+    <!-- =====================================================
+         BOTTOM HUD
+         ===================================================== -->
+    <footer class="bottom-hud">
+
+      <button
+        class="hud-menu"
+        id="btn-menu"
+        type="button"
+        aria-label="Game information"
+        title="Game information"
+      >
+        ☰
+      </button>
+
+
+      <div class="hud-stat hud-balance">
+
+        <span class="hud-label">
+          BALANCE
+        </span>
+
+        <strong
+          class="hud-value"
+          id="balance"
+        >
+          $1,000.00
+        </strong>
+
+      </div>
+
+
+      <div class="hud-stat hud-win">
+
+        <span class="hud-label">
+          WIN
+        </span>
+
+        <strong
+          class="hud-value hud-win-value"
+          id="total-win"
+        >
+          $0.00
+        </strong>
+
+      </div>
+
+
+      <div class="hud-stat hud-total-bet">
+
+        <span class="hud-label">
+          TOTAL BET
+        </span>
+
+        <strong
+          class="hud-value"
+          id="hud-bet-value"
+        >
+          $1.00
+        </strong>
+
+      </div>
+
+    </footer>
+
+
+    <!-- =====================================================
+         DEMO CONTROLS
+         ===================================================== -->
+    <div class="demo-tools">
+
+      <button
+        class="btn-tiny"
+        id="btn-deposit"
+        type="button"
+      >
+        + Add $1,000 Demo Chips
+      </button>
+
+      <span class="kbd-hint">
+        Spacebar = Spin
+      </span>
+
+    </div>
+
+
+    <!-- =====================================================
+         GAME INFORMATION
+         ===================================================== -->
+    <section
+      class="info-panel"
+      id="info-panel"
+    >
+
+      <div class="info-header">
+
+        <div>
+          <span class="info-kicker">
+            VICE HEIST
+          </span>
+
+          <h2>
+            GAME INFO
+          </h2>
+        </div>
+
+        <div class="info-badges">
+
+          <span>
+            RTP 96%
+          </span>
+
+          <span>
+            MAX 10,000×
+          </span>
+
+          <span>
+            20 PAYLINES
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="info-grid">
+
+        <article class="info-card">
+
+          <h3>
+            BASE GAME
+          </h3>
+
+          <p>
+            Wins pay from left to right across 20 paylines.
+            Wild substitutes for all regular symbols except Scatter.
+          </p>
+
+        </article>
+
+
+        <article class="info-card">
+
+          <h3>
+            FREE SPINS
+          </h3>
+
+          <p>
+            3 or more Scatter symbols trigger 10 Free Spins.
+            Free Spin wins use a 2× multiplier.
+          </p>
+
+        </article>
+
+
+        <article class="info-card">
+
+          <h3>
+            BONUS BUY
+          </h3>
+
+          <p>
+            Bonus Buy costs 100× the selected bet and
+            immediately enters the Free Spins feature.
+          </p>
+
+        </article>
+
+      </div>
+
+
+      <!-- PAYTABLE -->
+      <div class="paytable-wrap">
+
+        <h3 class="paytable-heading">
+          PAYTABLE
+        </h3>
+
+        <table class="paytable">
+
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>3×</th>
+              <th>4×</th>
+              <th>5×</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            <tr>
+              <td>Wild</td>
+              <td>0.64×</td>
+              <td>4.28×</td>
+              <td>79.5×</td>
+            </tr>
+
+            <tr>
+              <td>Book</td>
+              <td>0.27×</td>
+              <td>1.60×</td>
+              <td>16×</td>
+            </tr>
+
+            <tr>
+              <td>Gold Bar</td>
+              <td>0.13×</td>
+              <td>0.80×</td>
+              <td>7.43×</td>
+            </tr>
+
+            <tr>
+              <td>Diamond</td>
+              <td>0.11×</td>
+              <td>0.58×</td>
+              <td>4.79×</td>
+            </tr>
+
+            <tr>
+              <td>Ruby</td>
+              <td>0.09×</td>
+              <td>0.43×</td>
+              <td>3.19×</td>
+            </tr>
+
+            <tr>
+              <td>Emerald</td>
+              <td>0.06×</td>
+              <td>0.30×</td>
+              <td>2.13×</td>
+            </tr>
+
+            <tr>
+              <td>Club</td>
+              <td>0.04×</td>
+              <td>0.15×</td>
+              <td>1.06×</td>
+            </tr>
+
+            <tr>
+              <td>Spade</td>
+              <td>0.03×</td>
+              <td>0.11×</td>
+              <td>0.64×</td>
+            </tr>
+
+            <tr>
+              <td>Heart</td>
+              <td>0.03×</td>
+              <td>0.11×</td>
+              <td>0.64×</td>
+            </tr>
+
+            <tr class="scatter-row">
+              <td>Scatter</td>
+              <td colspan="3">
+                3+ anywhere → 10 Free Spins at 2×
+              </td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+      <p class="paytable-note">
+        Vice Heist uses precomputed weighted Stake Engine books.
+        Base and Bonus Buy modes are calibrated to a 96% RTP target.
+        Maximum win is 10,000× bet.
+      </p>
+
+    </section>
+
+  </main>
+
+
+  <script src="game.js"></script>
+
 </body>
 </html>

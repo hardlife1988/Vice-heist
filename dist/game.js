@@ -219,14 +219,69 @@ function setSpinning(on) {
 
 async function playReveal(event) {
   const board = event.board || [];
-  for (let reel = 0; reel < 5; reel++) {
-    AudioFX.reelStop();
-    const col = board[reel] || [];
-    for (let row = 0; row < 3; row++) {
-      paintCell(row, reel, col[row], 'landed');
+
+  const spinSymbols = Object.keys(SYMBOL_ASSETS).filter(
+    code => code !== 'S'
+  );
+
+  const reelStates = Array.from({ length: 5 }, (_, reel) => ({
+    reel,
+    running: true,
+    offset: reel * 2
+  }));
+
+  /*
+   * Visual animation only.
+   *
+   * The result has already been selected by the weighted game book.
+   * These temporary symbols never affect payout or game math.
+   */
+  const spinTimer = setInterval(() => {
+    for (const reelState of reelStates) {
+      if (!reelState.running) continue;
+
+      reelState.offset += 1;
+
+      for (let row = 0; row < 3; row++) {
+        const index =
+          (reelState.offset + row) % spinSymbols.length;
+
+        const symbol = spinSymbols[index];
+
+        paintCell(row, reelState.reel, symbol, 'spinning');
+      }
     }
-    await sleep(90 + reel * 25);
+  }, 70);
+
+  /*
+   * Give all five reels time to visibly accelerate before
+   * the first reel stops.
+   */
+  await sleep(500);
+
+  for (let reel = 0; reel < 5; reel++) {
+    /*
+     * Reels stop from left to right.
+     */
+    await sleep(180 + reel * 35);
+
+    reelStates[reel].running = false;
+
+    const col = board[reel] || [];
+
+    for (let row = 0; row < 3; row++) {
+      paintCell(
+        row,
+        reel,
+        col[row],
+        'landed'
+      );
+    }
+
+    AudioFX.reelStop();
   }
+
+  clearInterval(spinTimer);
 }
 
 async function playEvents(events) {
@@ -237,27 +292,34 @@ async function playEvents(events) {
         await playReveal(ev);
         break;
       case 'winInfo': {
-        const cash = centsToCash(ev.totalWin || 0);
-        const positions = [];
-        (ev.wins || []).forEach(w => (w.positions || []).forEach(p => positions.push(p)));
-        highlightWins(positions);
-        (ev.wins || []).forEach(w => {
-          if (w.meta && w.meta.scatter) log.push(`<span class="scatter-line">📖 ${w.kind} Scatters → ${fmt(centsToCash(w.win))}</span>`);
-          else log.push(`<span class="win-line">${w.kind}× ${w.symbol} → ${fmt(centsToCash(w.win))}</span>`);
-        });
-        $winLog.innerHTML = log.join('<br>') || '';
-        if (cash > 0) AudioFX.win(cash, state.bet);
-        await sleep(280);
-        break;
-      }
+  const cash = centsToCash(ev.totalWin || 0);
+  const positions = [];
+
+  (ev.wins || []).forEach(w => {
+    (w.positions || []).forEach(p => positions.push(p));
+  });
+
+  highlightWins(positions);
+
+  if (cash > 0) {
+    $winLog.innerHTML =
+      `<span class="win-line">WIN ${fmt(cash)}</span>`;
+
+    AudioFX.win(cash, state.bet);
+  } else {
+    $winLog.innerHTML = '';
+  }
+
+  await sleep(280);
+  break;
+}
       case 'freeSpinTrigger':
         AudioFX.scatter();
         $freeSpinsBar.style.display = 'block';
         $fsCount.textContent = ev.totalFs || 10;
-        $btnSpin.classList.add('free-mode');
-        $btnSpin.textContent = 'FREE';
-        log.push(`<span class="scatter-line">⚡ ${ev.totalFs} FREE SPINS</span>`);
-        $winLog.innerHTML = log.join('<br>');
+       
+       $winLog.innerHTML =
+  `<span class="scatter-line">⚡ ${ev.totalFs || 10} FREE SPINS</span>`;
         await sleep(450);
         break;
       case 'updateFreeSpin':
@@ -396,3 +458,6 @@ async function init() {
 }
 
 init();
+/* Vice Heist — Stake book player (static, no Flask) */
+
+
