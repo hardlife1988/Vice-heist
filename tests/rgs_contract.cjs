@@ -5,6 +5,12 @@ const mock=async(url,options)=>{const body=JSON.parse(options.body);calls.push([
 (async()=>{
  assert.equal(StakeMoney.format(1,'BTC'),'BTC 0.000001');assert.equal(StakeMoney.payout(10,10000),1000);assert.throws(()=>StakeMoney.safe(NaN));
  for(const endpoint of ['https://user:pass@example.test','https://example.test/?token=secret','https://example.test/#fragment','http://example.test'])assert.throws(()=>new RGS(new URLSearchParams({sessionID:'test',rgs_url:endpoint}),mock),/RGS URL|Invalid RGS URL/);
+ const allBetLevels=[10000,20000,50000,100000,200000,400000,1000000,2000000,5000000,10000000,20000000,50000000,100000000];
+ const levelClient=new RGS(new URLSearchParams('sessionID=levels&rgs_url=https://example.test'),mock);
+ levelClient.config={minBet:10000,maxBet:100000000,stepBet:10000,defaultBetLevel:1000000,betLevels:allBetLevels};
+ for(const bet of allBetLevels){levelClient.validBet(bet);assert.equal(StakeMoney.payout(100,bet),bet,'1x payout exact at '+bet);assert.equal(StakeMoney.payout(1000000,bet),bet*10000,'10,000x max payout at '+bet);assert.equal(StakeMoney.safe(bet*100),bet*100,'bonus buy exact at '+bet);}
+ for(const invalid of [9999,30000,100000001])assert.throws(()=>levelClient.validBet(invalid),/outside Stake limits|Invalid wallet/);
+ assert.equal(StakeMoney.format(1,'BTC'),'BTC 0.000001');assert.equal(StakeMoney.format(1234567,'ETH'),'ETH 1.234567');
  const client=new RGS(new URLSearchParams('sessionID=test&rgs_url=https://example.test'),mock);await client.authenticate();assert.throws(()=>client.validBet(20000));assert.throws(()=>client.validBet(100000001));
  const played=await client.play(10000,'bonus');assert.equal(calls.at(-1)[1].amount,10000);assert.equal(client.events(played.round)[0].amount,10);assert.throws(()=>client.events({...round,payout:999}),/cash payout/);assert.throws(()=>client.events({...round,payoutMultiplier:0.2}),/payout does not match/);assert.throws(()=>client.events({...round,state:[{index:0,type:'finalWin',amount:-10}]}),/payout does not match/);await assert.rejects(()=>client.play(10000,'base'));await client.checkpoint(0);await client.finish();assert.equal(client.round,null);
  const zeroCalls=[];const zeroRound={betID:2,amount:10000,payout:0,payoutMultiplier:0,active:true,state:[{index:0,type:'finalWin',amount:0}]};
