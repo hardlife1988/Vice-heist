@@ -1,50 +1,28 @@
-name: Run Math SDK
-
+name: Verify Production Math
 on:
   workflow_dispatch:
-
 jobs:
-  build:
+  math:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-
-      - name: Test win evaluator
-        run: python -m unittest discover -s tests -v
-
-      - name: Build calibrated bundle
-        run: python math/build_stake_bundle.py
-
-      - name: Validate generated math bundle
-        run: python math/validate_bundle.py
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Clone and set up Stake SDK
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python math/build_stake_bundle.py --release
+      - run: python math/validate_bundle.py --publish release/math --release
+      - run: python math/stress_published.py
+      - name: Official SDK format checks
         run: |
-          git clone https://github.com/StakeEngine/math-sdk.git
-          cd math-sdk
-          pip install -e .
-          make setup
-
-      - name: Run math entry point
-        run: |
-          export PYTHONPATH="${PYTHONPATH}:$(pwd)/math-sdk/src"
-          cd math
-          python3 run.py
-
-      - name: Upload output
-        if: always()
-        uses: actions/upload-artifact@v4
+          git clone https://github.com/engineio/math-sdk.git sdk-reference
+          git -C sdk-reference checkout a6dccd86de740cc5d318079483cb6204cc5c19bc
+          python math/sdk_verify.py --sdk sdk-reference
+      - uses: actions/upload-artifact@v4
         with:
-          name: math-output
-          path: math/library/publish_files/
-          if-no-files-found: warn
+          name: vice-heist-production-candidate
+          path: release/
+          if-no-files-found: error

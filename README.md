@@ -1,70 +1,30 @@
 # Vice Heist
 
-5-reel, 3-row slot prototype with precomputed math books and a static browser demo. The frontend samples local lookup tables and plays bundled book events. It is not connected to Stake's RGS and is not an approved production game.
+5 reels, 3 rows and 20 paylines. The always-visible payout chart and detailed rules read the same paytable as the math generator. Stake sessions use the RGS wallet; local demonstration play uses weighted precomputed outcomes and demo chips.
 
-## Play locally
+## Run locally
 
-Serve the complete `dist/` directory over HTTP:
-
-```bash
-python -m http.server 5000 --directory dist
 ```
-
-Open `http://localhost:5000` in a local browser. Spin, bonus buy, and free spins run from bundled books without Flask. Opening `index.html` directly as a file does not provide the HTTP requests needed to load the books.
-
-For Windows 10 / Codespaces, select the branch containing the work you want to preview, then **Code → Codespaces → Create codespace**. Wait for startup and open the forwarded port 5000 from the **Ports** tab. To update an older Codespace's container configuration, use **Ctrl+Shift+P → Rebuild Container**.
-
-## Frontend source and packaging
-
-`static/` contains the frontend source and prototype image/audio assets. `dist/` is the packaged demo. Repackage frontend edits without changing any existing math books or lookup weights:
-
-```bash
-python math/build_stake_bundle.py --frontend-only
-```
-
-This copies `index.html`, `style.css`, `game.js`, and the full `assets/` tree from `static/`. It requires those source files and the assets directory; missing inputs fail with their paths. It does not regenerate or restore math files.
-
-Keep all of these together when hosting or sharing the current demo:
-
-- `index.html`, `style.css`, and `game.js`
-- The complete `assets/` tree, including symbols, backgrounds, UI artwork, and audio
-- `books_base.json` and `books_bonus.json`
-- `lookUpTable_base.csv` and `lookUpTable_bonus.csv`
-- `game_config.json`
-
-If rebuilding a clean checkout's entire bundle, or intentionally generating new math, run:
-
-```bash
+python -m pip install -r requirements.txt
 python math/build_stake_bundle.py
+python server.py
 ```
 
-That command regenerates math publish files, demo books, lookup tables, and configuration, then packages the frontend. Use `--frontend-only` for visual changes to preserve the committed math bundle.
+Open http://localhost:5000. A clean checkout requires the build: large generated books and lookup tables are CI artifacts, not committed source. `static/` is the frontend source; `dist/` is the packaged demo. `--frontend-only` copies frontend edits while preserving already-generated math.
 
-## Validate the existing math bundle
+## Production candidate and validation
 
-These checks do not regenerate math:
+See [DEPLOYMENT.md](DEPLOYMENT.md) for release, exhaustive evaluator audit, four-million-round tests, official SDK checks and submission steps. `--release` generates 100,000 outcomes for each mode and a static frontend requiring a Stake session. Base costs 1×; Bonus Buy costs 100× the ordinary bet. Both published distributions target 96% RTP. Maximum cumulative win is 10,000× and terminates the round.
 
-```bash
+Wallet values use integer micro-units (six decimal places). Currency comes from authentication. Bet limits and selectable levels come from the platform. Bonus purchases require confirmation. Active rounds resume through recorded event checkpoints; failed wager requests are never retried automatically. Public replay uses no wallet requests.
+
+Checks run on the feature branch, with Python unit tests, wallet contracts, real Chromium browser tests, every published event, the actual pinned SDK format verifier and 104 million weighted round samples. Inspect the Actions results for the specific commit before using an artifact. Successful local tests do not constitute platform approval or a verified live-money integration. Publisher session validation and Stake review remain required.
+
+```
 python -m unittest discover -s tests -v
-python math/validate_bundle.py
-```
-
-The existing committed bundle contains 4,000 base books and 1,200 bonus books. Validation computes weighted RTP of **95.8205% base** and **95.9938% bonus buy**, accounting for the 100× bonus-buy cost. Both pass the validator's 96% target tolerance of ±0.5 percentage points. Payout units are **100 = 1.0× ordinary bet**.
-
-These are checks of the stored books, lookup weights, and final payout events. They do not certify all game math, fairness, production readiness, or Stake acceptance.
-
-## Browser checks
-
-The demo includes working Turbo, sound mute, and Game Info controls. The WIN display shows the latest round, and both bet displays stay synchronized. Spin and Bonus Buy remain disabled until the books and lookup tables load and match.
-
-Run the browser regression checks with Node.js 22+, Python, and Playwright:
-
-```bash
-npm install --no-save --package-lock=false playwright@1.62.1
-npx --no-install playwright install chromium
+node tests/rgs_contract.cjs
 node tests/browser_smoke.cjs
+node tests/browser_rgs.cjs
 ```
 
-The script starts and stops its own local server. It checks deterministic base wins/losses, free spins, bonus buys, balances, controls, loading failures, and mobile artwork/layout. Set `CHROMIUM_PATH` to use an existing Chromium executable or `PYTHON` to select Python. The GitHub validation workflow runs unit tests, a clean bundle build, math validation, and browser checks on relevant pull requests and feature-branch pushes.
-
-See [STAKE_UPLOAD.md](STAKE_UPLOAD.md) for math package contents and the RGS integration required before production submission, and [CYBERPUNK_INTEGRATION.md](CYBERPUNK_INTEGRATION.md) for artwork status.
+Browser tests require Playwright and Chromium (`npx playwright install chromium`). The supported local server serves static assets only; Stake RGS performs real wagering and settlement. Legacy independent reel simulation is a diagnostic, not the published RGS distribution.

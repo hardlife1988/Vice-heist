@@ -1,0 +1,18 @@
+[
+  {
+    "mode": "base",
+    "books": 100000,
+    "rtp": 0.9599999890200601,
+    "cap_probability": 1.9999999734920005e-06,
+    "win_probability": 0.5599780787590506,
+    "all_events_verified": true
+  },
+  {
+    "mode": "bonus",
+    "books": 100000,
+    "rtp": 0.959999999632554,
+    "cap_probability": 1.999999995306e-06,
+    "win_probability": 0.9999897092770241,
+    "all_events_verified": true
+  }
+]

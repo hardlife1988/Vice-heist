@@ -9,7 +9,7 @@ class GameConfig:
         self.reels            = 5
         self.rows             = 3
         self.paylines         = 20
-        self.min_bet          = 0.20   # total bet (all lines)
+        self.min_bet          = 0.01   # total bet (all lines)
         self.max_bet          = 100.00
         self.default_bet      = 1.00
         self.rtp              = 0.96

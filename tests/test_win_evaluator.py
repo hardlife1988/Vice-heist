@@ -28,7 +28,7 @@ class WinEvaluatorTests(unittest.TestCase):
         )
         self.assertEqual(result["symbol_key"], "G")
         self.assertEqual(result["count"], 5)
-        self.assertEqual(result["win"], 7.43)
+        self.assertEqual(result["win"], 7.4)
 
     def test_all_wild_line(self):
         result = self.evaluator._evaluate_payline(

@@ -33,13 +33,15 @@ jobs:
         with:
           node-version: "22"
       - name: Install publish-book compression
-        run: python -m pip install zstandard==0.25.0
+        run: python -m pip install -r requirements.txt
       - name: Unit tests
         run: python -m unittest discover -s tests -v
       - name: Check frontend JavaScript syntax
         run: |
           node --check static/game.js
           node --check dist/game.js
+      - name: RGS and crypto wallet contracts
+        run: node tests/rgs_contract.cjs
       - name: Build calibrated bundle
         run: python math/build_stake_bundle.py
       - name: Validate generated bundle
@@ -49,13 +51,27 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.62.1
           npx --no-install playwright install --with-deps chromium
       - name: Verify packaged game in the browser
-        run: node tests/browser_smoke.cjs
+        run: |
+          node tests/browser_smoke.cjs
+          node tests/browser_rgs.cjs
+      - name: Build production outcome set
+        run: python math/build_stake_bundle.py --release
+      - name: Audit every production outcome
+        run: python math/validate_bundle.py --publish release/math --release
+      - name: Four million rounds per bet and mode
+        run: python math/stress_published.py
+      - name: Official SDK format checks
+        run: |
+          git clone https://github.com/engineio/math-sdk.git sdk-reference
+          git -C sdk-reference checkout a6dccd86de740cc5d318079483cb6204cc5c19bc
+          python math/sdk_verify.py --sdk sdk-reference
       - name: Upload generated math for inspection
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: vice-heist-calibrated-math
           path: |
+            release/
             math/library/publish_files/
             dist/books_*.json
             dist/lookUpTable_*.csv

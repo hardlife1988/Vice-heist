@@ -1725,3 +1725,15 @@ button:focus-visible {
     animation: none;
   }
 }
+
+/* Always-visible paytable, using the same values as the math bundle. */
+.top-payouts {margin: 8px 0 16px; padding: 12px; border: 1px solid #543167; border-radius: 14px; background: rgba(5,2,13,.88)}
+#top-payouts {display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 10px}
+.payout-symbol {display:flex; align-items:center; gap:8px; min-width:0}
+.payout-symbol img {width:52px;height:60px;object-fit:contain}
+.payout-symbol strong {font-size:12px;display:block;color:var(--cyan)}
+.payout-symbol span {font-size:12px;display:block;white-space:nowrap;color:var(--gold);font-weight:700}
+.top-payouts p {text-align:center;font-size:12px;color:var(--text-dim);margin-top:10px}
+dialog {margin:auto;max-width:420px;padding:24px;border:1px solid var(--cyan);border-radius:16px;background:var(--bg);color:white}
+dialog::backdrop {background:#000b} dialog p {margin:14px 0} dialog button {padding:12px;margin:8px;color:white;background:#502760;border:1px solid var(--cyan);border-radius:8px}
+@media(max-width:650px) {#top-payouts {grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.payout-symbol img {width:34px;height:46px}.payout-symbol {gap:4px}.payout-symbol span {font-size:11px}.top-payouts {padding:8px}.payout-symbol strong {font-size:10px}}

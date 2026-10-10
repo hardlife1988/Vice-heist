@@ -14,7 +14,7 @@ const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '..');
 const money = value => Number(value.replace(/[^\d.-]/g, ''));
-const roundCash = value => Math.round(value * 100) / 100;
+const roundCash = value => Math.round(value * 1000000) / 1000000;
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
 async function freePort() {
@@ -157,6 +157,7 @@ async function playKnownRound(page, mode, kind) {
   const before = await cashAt(page, '#balance');
   const payout = roundCash(book.payout / 100 * bet);
   await page.locator(mode === 'bonus' ? '#btn-bonus-buy' : '#btn-spin').click();
+  if(mode==='bonus') await page.locator('#bonus-accept').click();
   await page.waitForFunction(() => !document.getElementById('btn-spin').disabled, undefined, { timeout: 20000 });
   assert.equal(await cashAt(page, '#balance'), roundCash(before - bet * (mode === 'bonus' ? 100 : 1) + payout), `${mode} book ${book.id} balance`);
   assert.equal(await cashAt(page, '#total-win'), payout, `${mode} book ${book.id} current-round win`);

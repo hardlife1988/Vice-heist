@@ -10,7 +10,7 @@ class Symbol(Enum):
     """Symbol definitions for Vice-heist."""
     WILD    = 'W'   # Substitutes any non-scatter; highest payer
     SCATTER = 'S'   # Book scatter — triggers free spins (any position)
-    BOOK    = 'B'   # Expanding symbol in free spins
+    BOOK    = 'B'   # Regular paying symbol
     GOLD_BAR = 'G'
     DIAMOND  = 'D'
     RUBY     = 'R'
@@ -24,18 +24,19 @@ class Paytable:
     """Paytable for Vice-heist slot game (5 reels, 3 rows, 20 paylines)."""
 
     # Win multipliers for 3 / 4 / 5 of a kind (relative to total bet).
-    # Calibrated for ~96% RTP across 20 paylines.
-    # Values scaled from 100k-spin baseline (92.1% → 96% target, ×1.044).
+    # Lookup weights, rather than these nominal line values, determine RTP.
+    # RGS verifier requires final payouts in 0.1x increments. All line
+    # awards use that same quantum, so line, spin and round totals are exact.
     SYMBOL_PAYS = {
-        Symbol.WILD:     {3: 0.64,  4: 4.28, 5: 79.5},
-        Symbol.BOOK:     {3: 0.265, 4: 1.60, 5: 16.0},
-        Symbol.GOLD_BAR: {3: 0.127, 4: 0.795,5: 7.43},
-        Symbol.DIAMOND:  {3: 0.107, 4: 0.58, 5: 4.79},
-        Symbol.RUBY:     {3: 0.086, 4: 0.428,5: 3.19},
-        Symbol.EMERALD:  {3: 0.064, 4: 0.295,5: 2.13},
-        Symbol.CLUB:     {3: 0.043, 4: 0.149,5: 1.06},
-        Symbol.SPADE:    {3: 0.027, 4: 0.106,5: 0.638},
-        Symbol.HEART:    {3: 0.027, 4: 0.106,5: 0.638},
+        Symbol.WILD:     {3: 0.6, 4: 4.3, 5: 79.5},
+        Symbol.BOOK:     {3: 0.3, 4: 1.6, 5: 16.0},
+        Symbol.GOLD_BAR: {3: 0.1, 4: 0.8, 5: 7.4},
+        Symbol.DIAMOND:  {3: 0.1, 4: 0.6, 5: 4.8},
+        Symbol.RUBY:     {3: 0.1, 4: 0.4, 5: 3.2},
+        Symbol.EMERALD:  {3: 0.1, 4: 0.3, 5: 2.1},
+        Symbol.CLUB:     {3: 0.1, 4: 0.2, 5: 1.1},
+        Symbol.SPADE:    {3: 0.1, 4: 0.2, 5: 0.6},
+        Symbol.HEART:    {3: 0.1, 4: 0.2, 5: 0.6},
     }
 
     # 20 paylines for a 5-reel, 3-row grid

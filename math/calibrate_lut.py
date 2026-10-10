@@ -8,7 +8,7 @@ import math
 
 
 TARGET_RTP = 0.96
-TOLERANCE = 0.005  # Half a percentage point.
+TOLERANCE = 0.000001  # 0.0001 percentage point; both modes target 96%.
 
 
 def weighted_rtp(books: list[dict], weights: list[int], cost: float) -> float:
@@ -26,7 +26,7 @@ def calibrate(
     cost: float,
     target: float = TARGET_RTP,
     tolerance: float = TOLERANCE,
-    weight_scale: int = 100_000,
+    weight_scale: int = 1_000_000_000_000,
 ) -> tuple[list[int], float]:
     """Exponential tilt of book probabilities; retain every book with weight >= 1.
 
