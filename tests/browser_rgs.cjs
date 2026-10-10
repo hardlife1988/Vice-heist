@@ -13,7 +13,9 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
   const balanceStart=100000000;let balance=balanceStart;const calls=[];let pending=null;
   const page=await ctx.newPage();await page.addInitScript(()=>{Math.random=()=>{throw Error('Local RNG used in a Stake session');};HTMLMediaElement.prototype.play=()=>Promise.resolve();});
   await page.route('https://mock-rgs.test/**',async route=>{
-   const req=route.request(),name=new URL(req.url()).pathname;const body=req.method()==='POST'?req.postDataJSON():{};calls.push({name,body});let data;
+   const req=route.request(),name=new URL(req.url()).pathname;
+   if(req.method()==='OPTIONS') { await route.fulfill({status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}}); return; }
+   const body=req.method()==='POST'?req.postDataJSON():{};calls.push({name,body});let data;
    if(name==='/wallet/authenticate')data={balance:{amount:balance,currency:'BTC'},config:{minBet:10000,maxBet:100000000,stepBet:10000,defaultBetLevel:10000,betLevels:[10000,1000000,100000000]},jurisdictionFlags:{displayRTP:true},round:pending};
    else if(name==='/wallet/play'){balance-=body.amount*(body.mode==='bonus'?100:1);pending={betID:1,amount:body.amount,payout:Math.round(book.payoutMultiplier*body.amount/100),payoutMultiplier:book.payoutMultiplier/100,mode:body.mode,active:true,state:book.events};data={balance:{amount:balance,currency:'BTC'},round:pending};}
    else if(name==='/wallet/end-round'){balance+=pending.payout;pending=null;data={balance:{amount:balance,currency:'BTC'}};}
@@ -23,7 +25,8 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
    await route.fulfill({json:data,headers:{'Access-Control-Allow-Origin':'*'}});
   });
   const url=`http://127.0.0.1:${port}/?sessionID=test&rgs_url=https%3A%2F%2Fmock-rgs.test`;
-  await page.goto(url);await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);
+  page.on('pageerror',err=>console.error('Browser page error:',err.message));
+  await page.goto(url);await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled).catch(async err=>{console.error('RGS initialization diagnostic:',JSON.stringify({calls,body:(await page.locator('body').innerText()).slice(0,1500)}));throw err;});
   assert.equal(await page.locator('#bet-select option').count(),3);assert.equal(await page.locator('.demo-tools').isVisible(),false);assert.equal(await page.locator('#top-payouts .payout-symbol').count(),10);
   await page.locator('#btn-spin').click();await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);assert.equal(calls.filter(c=>c.name==='/wallet/play').length,1);assert.equal(balance,balanceStart-10000+Math.round(book.payoutMultiplier*10000/100));assert.match(await page.locator('#total-win').innerText(),/^BTC /);
   await page.locator('#btn-bonus-buy').click();await page.locator('#bonus-cancel').click();assert.equal(calls.filter(c=>c.name==='/wallet/play').length,1);
