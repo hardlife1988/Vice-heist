@@ -15,25 +15,31 @@
 
   function toCents(value) {
     const numeric = Number(value ?? 0);
-    if (!Number.isFinite(numeric)) return 0;
+    if (!Number.isFinite(numeric) || numeric < 0) return 0;
     return Math.round(numeric * 100);
   }
 
   function centsToCash(cents) {
     const numeric = Number(cents ?? 0);
     if (!Number.isFinite(numeric)) return 0;
-    return Math.round(numeric) / 100;
+    return numeric / 100;
   }
 
   function decodeWinCents(multiplier, bet) {
     const winMultiplier = Number(multiplier ?? 0);
     const betValue = Number(bet ?? 0);
-    if (!Number.isFinite(winMultiplier) || !Number.isFinite(betValue)) {
+
+    if (!Number.isFinite(winMultiplier) || !Number.isFinite(betValue) || winMultiplier < 0 || betValue < 0) {
       return 0;
     }
-    const rawCents = winMultiplier * toCents(betValue);
-    const capCents = toCents(betValue * CONFIG.maxWinMultiplier);
-    return Math.min(Math.round(rawCents), capCents);
+
+    if (winMultiplier === 0 || betValue === 0) {
+      return 0;
+    }
+
+    const rawCents = winMultiplier * betValue * 100;
+    const capCents = betValue * CONFIG.maxWinMultiplier * 100;
+    return Math.min(Math.round(rawCents), Math.round(capCents));
   }
 
   const Game = {
@@ -49,7 +55,9 @@
 
   const EngineClient = {
     bonusBuyCost(bet) {
-      return Math.round((Number(bet ?? 0) || 0) * CONFIG.bonusBuyMultiplier);
+      const betValue = Number(bet ?? 0);
+      if (!Number.isFinite(betValue) || betValue < 0) return 0;
+      return Math.round(betValue * CONFIG.bonusBuyMultiplier);
     },
     computeWinCents(multiplier, bet) {
       return decodeWinCents(multiplier, bet);
