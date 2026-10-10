@@ -54,7 +54,7 @@ test('ladder rounding preserves integer-cent precision', () => {
   const credit = api.decodeWinCents(multiplier, bet);
   const expected = Math.round((7.625 * 0.25) * 100);
   assert.equal(credit, expected);
-  assert.equal(api.centsToCash(credit), 1.90625);
+  assert.equal(api.centsToCash(credit), expected / 100);
 });
 
 test('centsToCash converts micro-units back to decimal currency correctly', () => {
