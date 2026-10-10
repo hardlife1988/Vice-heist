@@ -533,7 +533,7 @@ async function init() {
       document.querySelector('.demo-tools').hidden=true;
       if(auth.jurisdictionFlags?.disabledBuyFeature) $btnBonusBuy.hidden=true;
       const flags=auth.jurisdictionFlags||{};state.flags=flags;state.sessionStart=Date.now();state.sessionBalance=state.balance;
-      if(!flags.displayRTP){document.querySelector('.header-badge-rtp').hidden=true;$('rtp-details').hidden=true;}
+      if(flags.displayRTP===false){document.querySelector('.header-badge-rtp').hidden=true;$('rtp-details').hidden=true;document.querySelectorAll('.info-badges span').forEach(el=>{if(/RTP/i.test(el.textContent))el.hidden=true;});document.querySelectorAll('.paytable-note').forEach(el=>{el.textContent=el.textContent.replace(/Base and Bonus Buy modes are calibrated to a 96% RTP target\.\s*/,'').replace(/RTP is a long-run average, not a promise for a session\./,'');});}
       if(flags.displaySessionTimer || flags.displayNetPosition) setInterval(()=>{const details=[];if(flags.displaySessionTimer)details.push('Session '+Math.floor((Date.now()-state.sessionStart)/60000)+' min');if(flags.displayNetPosition)details.push('Net '+(state.balance<state.sessionBalance?'−':'+')+fmt(Math.abs(state.balance-state.sessionBalance)));$('session-details').textContent=details.join(' · ');},1000);
       if(flags.disabledTurbo){state.turbo=false;$btnTurbo.hidden=true;}
       const select=document.createElement('select');select.setAttribute('aria-label','Stake bet amount');select.id='bet-select';
