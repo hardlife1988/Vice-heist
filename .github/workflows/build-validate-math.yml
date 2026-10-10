@@ -69,6 +69,31 @@ jobs:
           git clone https://github.com/engineio/math-sdk.git sdk-reference
           git -C sdk-reference checkout a6dccd86de740cc5d318079483cb6204cc5c19bc
           python math/sdk_verify.py --sdk sdk-reference
+      - name: Write reproducible package checksums
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          for folder in (Path('release/math'), Path('release/frontend')):
+              lines=[]
+              for file in sorted(folder.rglob('*')):
+                  if file.is_file() and file.name != 'SHA256SUMS.txt':
+                      lines.append(f"{hashlib.sha256(file.read_bytes()).hexdigest()}  {file.relative_to(folder).as_posix()}")
+              (folder/'SHA256SUMS.txt').write_text('\\n'.join(lines)+'\\n')
+              print(folder, len(lines), 'checksums')
+          PY
+      - name: Upload independent production math package
+        uses: actions/upload-artifact@v4
+        with:
+          name: vice-heist-production-math
+          path: release/math/
+          if-no-files-found: error
+      - name: Upload independent production frontend package
+        uses: actions/upload-artifact@v4
+        with:
+          name: vice-heist-production-frontend
+          path: release/frontend/
+          if-no-files-found: error
       - name: Upload generated math for inspection
         if: success()
         uses: actions/upload-artifact@v4
