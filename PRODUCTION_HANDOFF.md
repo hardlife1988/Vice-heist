@@ -44,3 +44,7 @@ Package directories **separately**; do not upload the repository, test suite, or
 ## Important distinction
 
 A green CI run verifies the automated checks exercised on that commit. It does not certify real-money operation or guarantee Stake acceptance. The original `STAKE_UPLOAD.md` was a demo-era note and is superseded by this handoff.
+
+## Final two ZIP files
+
+The full CI release workflow creates `release/Vice_Heist_Math.zip` and `release/Vice_Heist_Frontend.zip`, each containing a separate top-level folder and its own verified `SHA256SUMS.txt`. Download both together from the `vice-heist-stake-upload-zips` GitHub Actions artifact after a **successful** run. These are release candidates until platform staging checks and owner approval are complete. Never submit, deploy, or merge automatically.
