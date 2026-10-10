@@ -43,46 +43,14 @@ def generate_spin_bytes(server_seed: str, client_seed: str, nonce: int) -> bytes
 
 
 def verify_spin(server_seed: str, client_seed: str, nonce: int,
-                reel_grid_values: list) -> dict:
+                reel_grid_values: list, mode: str = "base") -> dict:
+    """Verify local engine results using the engine's current RNG and reel mode.
+
+    This local diagnostic is independent of Stake RGS book selection.
     """
-    Verify that a spin result matches the provably fair hash.
-
-    Args:
-        server_seed:      Revealed server seed
-        client_seed:      Client seed used for this spin
-        nonce:            Nonce used for this spin
-        reel_grid_values: 3×5 list of symbol value strings (e.g. 'W', 'D', ...)
-
-    Returns:
-        {verified: bool, spin_hash: str, grid_hash: str}
-    """
-    spin_bytes = generate_spin_bytes(server_seed, client_seed, nonce)
-    spin_hash = spin_bytes.hex()
-
-    # Derive what the grid should have been from the hash bytes
-    from reel_engine import ReelWeights, _build_cumulative, _pick_from_cumulative
-    reels = 5
-    rows = 3
-    cum_data = [_build_cumulative(ReelWeights.ALL_REELS[r]) for r in range(reels)]
-    reel_columns = []
-    byte_idx = 0
-    for reel_num in range(reels):
-        symbols, cumulative, total = cum_data[reel_num]
-        col = []
-        for _ in range(rows):
-            raw = (spin_bytes[byte_idx] << 8) | spin_bytes[byte_idx + 1]
-            byte_idx += 2
-            col.append(_pick_from_cumulative(raw, symbols, cumulative, total))
-        reel_columns.append(col)
-
-    expected_grid = []
-    for row in range(rows):
-        expected_grid.append([reel_columns[reel][row].value for reel in range(reels)])
-
-    verified = (expected_grid == reel_grid_values)
-    return {
-        'verified': verified,
-        'spin_hash': spin_hash,
-        'expected_grid': expected_grid,
-        'provided_grid': reel_grid_values,
-    }
+    from reel_engine import spin_provably_fair
+    expected = [[symbol.value for symbol in row] for row in
+                spin_provably_fair(server_seed, client_seed, nonce, mode=mode)]
+    return {"verified": expected == reel_grid_values,
+            "expected_grid": expected, "provided_grid": reel_grid_values,
+            "mode": mode}

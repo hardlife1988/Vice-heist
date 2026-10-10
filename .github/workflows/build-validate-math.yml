@@ -1,0 +1,143 @@
+name: Build and Validate Vice Heist Math
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "feature/**"
+    paths:
+      - "math/**"
+      - "tests/**"
+      - "static/**"
+      - "dist/**"
+      - ".github/workflows/build-validate-math.yml"
+  pull_request:
+    paths:
+      - "math/**"
+      - "tests/**"
+      - "static/**"
+      - "dist/**"
+      - ".github/workflows/build-validate-math.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install publish-book compression
+        run: python -m pip install -r requirements.txt
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Check frontend JavaScript syntax
+        run: |
+          node --check static/game.js
+          node --check dist/game.js
+      - name: Payout arithmetic tests
+        run: node --test tests/payout.test.js
+      - name: RGS and crypto wallet contracts
+        run: node tests/rgs_contract.cjs
+      - name: Build calibrated bundle
+        run: python math/build_stake_bundle.py
+      - name: Validate generated bundle
+        run: python math/validate_bundle.py
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save --package-lock=false playwright@1.62.1
+          npx --no-install playwright install --with-deps chromium
+      - name: Verify packaged game in the browser
+        run: |
+          node tests/browser_smoke.cjs
+          node tests/browser_rgs.cjs
+      - name: Build production outcome set
+        run: python math/build_stake_bundle.py --release
+      - name: Audit every production outcome
+        run: python math/validate_bundle.py --publish release/math --release
+      - name: Four million rounds per bet and mode
+        run: python math/stress_published.py
+      - name: Verify independent release packages and simulation report
+        run: python tests/verify_release_packages.py
+      - name: Official SDK format checks
+        run: |
+          git clone https://github.com/engineio/math-sdk.git sdk-reference
+          git -C sdk-reference checkout a6dccd86de740cc5d318079483cb6204cc5c19bc
+          python math/sdk_verify.py --sdk sdk-reference
+      - name: Write reproducible package checksums
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          for folder in (Path('release/math'), Path('release/frontend')):
+              lines=[]
+              for file in sorted(folder.rglob('*')):
+                  if file.is_file() and file.name != 'SHA256SUMS.txt':
+                      lines.append(f"{hashlib.sha256(file.read_bytes()).hexdigest()}  {file.relative_to(folder).as_posix()}")
+              (folder/'SHA256SUMS.txt').write_text(chr(10).join(lines)+chr(10))
+              print(folder, len(lines), 'checksums')
+          PY
+      - name: Verify package checksums and build standalone ZIP files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          from zipfile import ZipFile, ZIP_DEFLATED
+          for name, folder in (('Vice_Heist_Math', Path('release/math')), ('Vice_Heist_Frontend', Path('release/frontend'))):
+              manifest = folder / 'SHA256SUMS.txt'
+              lines = manifest.read_text().splitlines()
+              files = sorted(p for p in folder.rglob('*') if p.is_file() and p != manifest)
+              assert len(lines) == len(files), f'{name}: checksum entry count mismatch'
+              expected = {}
+              for line in lines:
+                  digest, relative = line.split('  ', 1)
+                  assert len(digest) == 64 and relative not in expected
+                  expected[relative] = digest
+              for file in files:
+                  relative = file.relative_to(folder).as_posix()
+                  assert expected[relative] == hashlib.sha256(file.read_bytes()).hexdigest(), f'{name}: hash mismatch: {relative}'
+              archive = Path('release') / (name + '.zip')
+              with ZipFile(archive, 'w', ZIP_DEFLATED, compresslevel=6) as z:
+                  for file in files + [manifest]:
+                      z.write(file, arcname=name + '/' + file.relative_to(folder).as_posix())
+              with ZipFile(archive) as z:
+                  assert z.testzip() is None
+              print('PASS', archive, 'files', len(files)+1)
+          PY
+      - name: Upload standalone ZIP packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: vice-heist-stake-upload-zips
+          path: |
+            release/Vice_Heist_Math.zip
+            release/Vice_Heist_Frontend.zip
+          if-no-files-found: error
+      - name: Upload independent production math package
+        uses: actions/upload-artifact@v4
+        with:
+          name: vice-heist-production-math
+          path: release/math/
+          if-no-files-found: error
+      - name: Upload independent production frontend package
+        uses: actions/upload-artifact@v4
+        with:
+          name: vice-heist-production-frontend
+          path: release/frontend/
+          if-no-files-found: error
+      - name: Upload generated math for inspection
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vice-heist-calibrated-math
+          path: |
+            release/
+            math/library/publish_files/
+            dist/books_*.json
+            dist/lookUpTable_*.csv
+            dist/game_config.json
+          if-no-files-found: error

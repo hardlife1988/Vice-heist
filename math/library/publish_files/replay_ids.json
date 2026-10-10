@@ -1,0 +1,16 @@
+{
+  "base": {
+    "loss": 1,
+    "maxwin": 2,
+    "tail": 3,
+    "win": 38,
+    "bonusTrigger": 40
+  },
+  "bonus": {
+    "loss": 1,
+    "maxwin": 2,
+    "tail": 3,
+    "win": 79,
+    "bonusTrigger": 37
+  }
+}
