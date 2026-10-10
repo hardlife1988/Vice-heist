@@ -30,7 +30,7 @@
     <header class="game-header">
 
       <div class="header-badge header-badge-rtp">
-        <span class="badge-label">RTP</span>
+        <span class="badge-label">RTP TARGET</span>
         <strong>96%</strong>
       </div>
 
@@ -115,7 +115,8 @@
           class="btn-mute"
           id="btn-mute"
           type="button"
-          aria-label="Toggle sound"
+          aria-label="Mute sound"
+          aria-pressed="false"
           title="Sound"
         >
           🔊
@@ -169,6 +170,7 @@
           id="btn-spin"
           type="button"
           aria-label="Spin"
+          disabled
         >
           <span class="spin-arrow">↻</span>
           <span class="spin-text">SPIN</span>
@@ -181,18 +183,20 @@
           id="btn-bonus-buy"
           type="button"
           title="Instantly trigger Free Spins (100× bet)"
+          disabled
         >
           <span class="bonus-title">BONUS BUY</span>
           <small id="bonus-cost">$100.00</small>
         </button>
 
 
-        <!-- TURBO VISUAL CONTROL -->
+        <!-- TURBO CONTROL -->
         <button
           class="btn-turbo"
           id="btn-turbo"
           type="button"
           aria-label="Turbo mode"
+          aria-pressed="false"
           title="Turbo"
         >
           <span class="turbo-icon">⚡</span>
@@ -212,7 +216,7 @@
       id="win-log"
       aria-live="polite"
     >
-      Press SPIN or Spacebar
+      Loading game…
     </div>
 
 
@@ -226,6 +230,8 @@
         id="btn-menu"
         type="button"
         aria-label="Game information"
+        aria-controls="info-panel"
+        aria-expanded="false"
         title="Game information"
       >
         ☰
@@ -296,7 +302,7 @@
       </button>
 
       <span class="kbd-hint">
-        Spacebar = Spin
+        Demo chips only · Spacebar = Spin
       </span>
 
     </div>
@@ -308,6 +314,7 @@
     <section
       class="info-panel"
       id="info-panel"
+      hidden
     >
 
       <div class="info-header">
@@ -485,9 +492,10 @@
 
 
       <p class="paytable-note">
-        Vice Heist uses precomputed weighted Stake Engine books.
+        This demo uses precomputed weighted game books and demo chips.
         Base and Bonus Buy modes are calibrated to a 96% RTP target.
         Maximum win is 10,000× bet.
+        Stake Engine RGS integration is still required for platform play.
       </p>
 
     </section>

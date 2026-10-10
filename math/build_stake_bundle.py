@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import os
 import random
+import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -374,32 +376,52 @@ def maybe_zstd(src: str) -> str | None:
 
 
 def copy_frontend() -> None:
-    os.makedirs(DIST, exist_ok=True)
-
-    for name in (
+    """Package frontend source and assets without touching generated math."""
+    names = (
         "index.html",
         "style.css",
         "game.js",
-    ):
-        src = os.path.join(STATIC, name)
+    )
+    missing = [
+        os.path.join(STATIC, name)
+        for name in names
+        if not os.path.isfile(os.path.join(STATIC, name))
+    ]
+    assets = os.path.join(STATIC, "assets")
+    if not os.path.isdir(assets):
+        missing.append(assets)
+    if missing:
+        raise FileNotFoundError(
+            "Cannot package frontend; required source inputs are missing: "
+            + ", ".join(missing)
+        )
 
-        if os.path.isfile(src):
-            with open(
-                src,
-                "r",
-                encoding="utf-8",
-            ) as file:
-                data = file.read()
-
-            with open(
-                os.path.join(DIST, name),
-                "w",
-                encoding="utf-8",
-            ) as file:
-                file.write(data)
+    os.makedirs(DIST, exist_ok=True)
+    for name in names:
+        shutil.copyfile(
+            os.path.join(STATIC, name),
+            os.path.join(DIST, name),
+        )
+    shutil.copytree(
+        assets,
+        os.path.join(DIST, "assets"),
+        dirs_exist_ok=True,
+    )
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--frontend-only",
+        action="store_true",
+        help="Copy static/ frontend and assets, preserving existing math files.",
+    )
+    args = parser.parse_args()
+    if args.frontend_only:
+        copy_frontend()
+        print(f"Frontend → {DIST}; existing math files preserved")
+        return
+
     random.seed(
         int(
             os.environ.get(
