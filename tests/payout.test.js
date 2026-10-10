@@ -12,7 +12,7 @@ test('multiplier × bet crediting is calculated in cents and capped correctly', 
   const credit = api.decodeWinCents(multiplier, bet);
   const expected = Math.round((multiplier * bet) * 100);
   assert.equal(credit, expected);
-  assert.equal(api.centsToCash(credit), (multiplier * bet));
+  assert.equal(api.centsToCash(credit), expected / 100);
 });
 
 test('base mode credits 1.5× bet for a $2.00 wager', () => {
