@@ -79,9 +79,44 @@ jobs:
               for file in sorted(folder.rglob('*')):
                   if file.is_file() and file.name != 'SHA256SUMS.txt':
                       lines.append(f"{hashlib.sha256(file.read_bytes()).hexdigest()}  {file.relative_to(folder).as_posix()}")
-              (folder/'SHA256SUMS.txt').write_text('\\n'.join(lines)+'\\n')
+              (folder/'SHA256SUMS.txt').write_text(chr(10).join(lines)+chr(10))
               print(folder, len(lines), 'checksums')
           PY
+      - name: Verify package checksums and build standalone ZIP files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          from zipfile import ZipFile, ZIP_DEFLATED
+          for name, folder in (('Vice_Heist_Math', Path('release/math')), ('Vice_Heist_Frontend', Path('release/frontend'))):
+              manifest = folder / 'SHA256SUMS.txt'
+              lines = manifest.read_text().splitlines()
+              files = sorted(p for p in folder.rglob('*') if p.is_file() and p != manifest)
+              assert len(lines) == len(files), f'{name}: checksum entry count mismatch'
+              expected = {}
+              for line in lines:
+                  digest, relative = line.split('  ', 1)
+                  assert len(digest) == 64 and relative not in expected
+                  expected[relative] = digest
+              for file in files:
+                  relative = file.relative_to(folder).as_posix()
+                  assert expected[relative] == hashlib.sha256(file.read_bytes()).hexdigest(), f'{name}: hash mismatch: {relative}'
+              archive = Path('release') / (name + '.zip')
+              with ZipFile(archive, 'w', ZIP_DEFLATED, compresslevel=6) as z:
+                  for file in files + [manifest]:
+                      z.write(file, arcname=name + '/' + file.relative_to(folder).as_posix())
+              with ZipFile(archive) as z:
+                  assert z.testzip() is None
+              print('PASS', archive, 'files', len(files)+1)
+          PY
+      - name: Upload standalone ZIP packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: vice-heist-stake-upload-zips
+          path: |
+            release/Vice_Heist_Math.zip
+            release/Vice_Heist_Frontend.zip
+          if-no-files-found: error
       - name: Upload independent production math package
         uses: actions/upload-artifact@v4
         with:
