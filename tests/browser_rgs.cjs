@@ -39,6 +39,14 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
   assert.equal(await page.locator('#rtp-details').isVisible(),false);
   assert.equal(await page.locator('.info-badges span').filter({hasText:'RTP'}).isVisible(),false);
   assert.doesNotMatch(await page.locator('.paytable-note').innerText(),/96% RTP target|RTP is a long-run/i);
-  console.log('PASS browser RGS: server outcomes, crypto wallet, bonus confirmation, replay and hidden RTP jurisdiction');
+  const callsBeforeInvalid=calls.length;
+  for(const badRgs of ['https://user:pass@mock-rgs.test','https://mock-rgs.test/?token=secret','https://mock-rgs.test/#secret','http://mock-rgs.test']) {
+    const invalidUrl=`http://127.0.0.1:${port}/?replay=true&game=test&version=1&mode=base&event=1&rgs_url=${encodeURIComponent(badRgs)}`;
+    await page.goto(invalidUrl);
+    await page.waitForFunction(()=>/Could not load game data/.test(document.querySelector('#win-log').textContent));
+    assert.equal(await page.locator('#btn-spin').isDisabled(),true,'invalid replay URL must block play');
+  }
+  assert.equal(calls.length,callsBeforeInvalid,'invalid replay URLs must not contact RGS');
+  console.log('PASS browser RGS: crypto payout, bonus confirmation, replay, hidden RTP and unsafe replay URL rejection');
  }finally{if(browser)await browser.close();server.kill();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
