@@ -453,14 +453,12 @@ function round2(n) { return Math.round(n * 100) / 100; }
 
 $btnBetDown.addEventListener('click', () => {
   AudioFX.click();
-  const idx = BET_PRESETS.findIndex(v => Math.abs(v - state.bet) < 0.001);
-  state.bet = BET_PRESETS[Math.max(0, idx - 1)];
+  if(rgs && !rgs.levels.length){state.bet=Math.max(rgs.config.minBet,state.bet-rgs.config.stepBet);}else {const idx=BET_PRESETS.indexOf(state.bet);state.bet=BET_PRESETS[Math.max(0,idx-1)];}
   updateHUD();
 });
 $btnBetUp.addEventListener('click', () => {
   AudioFX.click();
-  const idx = BET_PRESETS.findIndex(v => Math.abs(v - state.bet) < 0.001);
-  state.bet = BET_PRESETS[Math.min(BET_PRESETS.length - 1, idx + 1)];
+  if(rgs && !rgs.levels.length){state.bet=Math.min(rgs.config.maxBet,state.bet+rgs.config.stepBet);}else {const idx=BET_PRESETS.indexOf(state.bet);state.bet=BET_PRESETS[Math.min(BET_PRESETS.length-1,idx+1)];}
   updateHUD();
 });
 $btnMute.addEventListener('click', () => {
@@ -531,7 +529,7 @@ async function init() {
       document.querySelector('.demo-tools').hidden=true;$btnBonusBuy.hidden=true;$btnBetDown.hidden=true;$btnBetUp.hidden=true;document.querySelector('.hud-balance').hidden=true;$spinText.textContent='REPLAY';
     } else if(params.has('sessionID') || params.has('rgs_url')) {
       rgs=new StakeRGS(params);const auth=await rgs.authenticate();state.balance=auth.balance.amount;state.currency=auth.balance.currency;state.bet=auth.config.defaultBetLevel;
-      BET_PRESETS=rgs.levels.length?rgs.levels:[auth.config.minBet,auth.config.defaultBetLevel,auth.config.maxBet].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+      BET_PRESETS=rgs.levels.length?[...rgs.levels].sort((a,b)=>a-b):[auth.config.minBet,auth.config.defaultBetLevel,auth.config.maxBet].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
       document.querySelector('.demo-tools').hidden=true;
       if(auth.jurisdictionFlags?.disabledBuyFeature) $btnBonusBuy.hidden=true;
       const flags=auth.jurisdictionFlags||{};state.flags=flags;state.sessionStart=Date.now();state.sessionBalance=state.balance;
