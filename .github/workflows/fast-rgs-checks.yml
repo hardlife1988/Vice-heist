@@ -1,0 +1,45 @@
+name: Vice Heist Fast Frontend and RGS Checks
+
+on:
+  push:
+    branches: [feature/cyberpunk-assets]
+    paths:
+      - 'static/**'
+      - 'tests/rgs_contract.cjs'
+      - 'tests/browser_rgs.cjs'
+      - 'tests/browser_smoke.cjs'
+      - 'tests/payout.test.js'
+      - 'game.js'
+      - '.github/workflows/fast-rgs-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-rgs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check production browser scripts
+        run: |
+          node --check static/game.js
+          node --check static/rgs.js
+          node --check static/money.js
+      - name: Verify payout and RGS contracts
+        run: |
+          node --test tests/payout.test.js
+          node tests/rgs_contract.cjs
+      - name: Verify no frontend secrets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source = '\n'.join(p.read_text() for p in Path('static').glob('*.js'))
+          for marker in ('-----BEGIN PRIVATE KEY-----', '-----BEGIN RSA PRIVATE KEY-----'):
+              assert marker not in source, f'Private key marker in frontend: {marker}'
+          print('PASS: no PEM private key markers in production JS')
+          PY
