@@ -1737,3 +1737,6 @@ button:focus-visible {
 dialog {margin:auto;max-width:420px;padding:24px;border:1px solid var(--cyan);border-radius:16px;background:var(--bg);color:white}
 dialog::backdrop {background:#000b} dialog p {margin:14px 0} dialog button {padding:12px;margin:8px;color:white;background:#502760;border:1px solid var(--cyan);border-radius:8px}
 @media(max-width:650px) {#top-payouts {grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.payout-symbol img {width:34px;height:46px}.payout-symbol {gap:4px}.payout-symbol span {font-size:11px}.top-payouts {padding:8px}.payout-symbol strong {font-size:10px}}
+
+/* Honor hidden controls even when component styles specify display. */
+[hidden] { display: none !important; }
