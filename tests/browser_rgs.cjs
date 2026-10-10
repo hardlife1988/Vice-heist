@@ -16,7 +16,7 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
    const req=route.request(),name=new URL(req.url()).pathname;
    if(req.method()==='OPTIONS') { await route.fulfill({status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}}); return; }
    const body=req.method()==='POST'?req.postDataJSON():{};calls.push({name,body});let data;
-   if(name==='/wallet/authenticate')data={balance:{amount:balance,currency:'BTC'},config:{minBet:10000,maxBet:100000000,stepBet:10000,defaultBetLevel:10000,betLevels:[10000,1000000,100000000]},jurisdictionFlags:{displayRTP:true},round:pending};
+   if(name==='/wallet/authenticate')data={balance:{amount:balance,currency:'BTC'},config:{minBet:10000,maxBet:100000000,stepBet:10000,defaultBetLevel:10000,betLevels:[10000,1000000,100000000]},jurisdictionFlags:{displayRTP:body.sessionID!=='rtp-hidden'},round:pending};
    else if(name==='/wallet/play'){balance-=body.amount*(body.mode==='bonus'?100:1);pending={betID:1,amount:body.amount,payout:Math.round(book.payoutMultiplier*body.amount/100),payoutMultiplier:book.payoutMultiplier/100,mode:body.mode,active:true,state:book.events};data={balance:{amount:balance,currency:'BTC'},round:pending};}
    else if(name==='/wallet/end-round'){balance+=pending.payout;pending=null;data={balance:{amount:balance,currency:'BTC'}};}
    else if(name==='/bet/event'){pending.event=body.event;data={event:body.event};}
@@ -34,6 +34,11 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
   await page.locator('#btn-bonus-buy').click();await page.locator('#bonus-cancel').click();assert.equal(calls.filter(c=>c.name==='/wallet/play').length,1);
   await page.locator('#btn-bonus-buy').click();await page.locator('#bonus-accept').click();await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);assert.deepEqual(calls.filter(c=>c.name==='/wallet/play').at(-1).body,{sessionID:'test',amount:10000,mode:'bonus'});
   const before=calls.length;await page.goto(`http://127.0.0.1:${port}/?replay=true&game=test&version=1&mode=base&event=1&currency=ETH&amount=10000&rgs_url=https%3A%2F%2Fmock-rgs.test`);await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);await page.locator('#btn-spin').click();await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);assert.equal(calls.length,before+1);assert.match(await page.locator('#total-win').innerText(),/^ETH /);
-  console.log('PASS browser RGS: crypto wallet, server result, all bet levels, bonus confirmation, exact ordinary buy amount, read-only replay');
+  await page.goto(`http://127.0.0.1:${port}/?sessionID=rtp-hidden&rgs_url=https%3A%2F%2Fmock-rgs.test`);await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);
+  assert.equal(await page.locator('.header-badge-rtp').isVisible(),false);
+  assert.equal(await page.locator('#rtp-details').isVisible(),false);
+  assert.equal(await page.locator('.info-badges span').filter({hasText:'RTP'}).isVisible(),false);
+  assert.doesNotMatch(await page.locator('.paytable-note').innerText(),/96% RTP target|RTP is a long-run/i);
+  console.log('PASS browser RGS: server outcomes, crypto wallet, bonus confirmation, replay and hidden RTP jurisdiction');
  }finally{if(browser)await browser.close();server.kill();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
