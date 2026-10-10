@@ -1740,3 +1740,25 @@ dialog::backdrop {background:#000b} dialog p {margin:14px 0} dialog button {padd
 
 /* Honor hidden controls even when component styles specify display. */
 [hidden] { display: none !important; }
+
+/* Mobile: keep the requested payouts above the reels without occupying four rows. */
+@media (max-width: 650px) {
+  .top-payouts { margin: 5px 0 8px; padding: 6px; }
+  #top-payouts {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .payout-symbol {
+    flex: 0 0 132px;
+    scroll-snap-align: start;
+    min-height: 62px;
+  }
+  .payout-symbol img { width: 36px; height: 44px; }
+  .top-payouts p { margin-top: 3px; font-size: 10px; }
+}
