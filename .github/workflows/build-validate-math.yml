@@ -40,6 +40,8 @@ jobs:
         run: |
           node --check static/game.js
           node --check dist/game.js
+      - name: Payout arithmetic tests
+        run: node --test tests/payout.test.js
       - name: RGS and crypto wallet contracts
         run: node tests/rgs_contract.cjs
       - name: Build calibrated bundle
