@@ -521,7 +521,7 @@ async function init() {
     const params=new URLSearchParams(location.search);
     if(params.get('replay')==='true') {
       const raw=params.get('rgs_url');if(!raw)throw Error('Missing replay RGS URL');
-      const url=new URL(raw.includes('://')?raw:'https://'+raw);if(url.protocol!=='https:' && !['localhost','127.0.0.1'].includes(url.hostname))throw Error('Invalid replay URL');
+      const url=new URL(raw.includes('://')?raw:'https://'+raw);if(url.protocol!=='https:' && !(url.protocol==='http:' && ['localhost','127.0.0.1'].includes(url.hostname)))throw Error('Invalid replay URL');if(url.username||url.password||url.search||url.hash)throw Error('Replay URL must not contain credentials, query, or fragment');
       const parts=['game','version','mode','event'].map(k=>{const value=params.get(k);if(!value)throw Error('Missing replay '+k);return encodeURIComponent(value);});
       const response=await fetch(url.href.replace(/\/$/,'')+'/bet/replay/'+parts.join('/'));if(!response.ok)throw Error('Replay unavailable');
       const data=await response.json();replayRound={events:StakeRGS.prototype.events.call(null,data)};
