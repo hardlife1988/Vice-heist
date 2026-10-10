@@ -26,6 +26,8 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
   });
   const url=`http://127.0.0.1:${port}/?sessionID=test&rgs_url=https%3A%2F%2Fmock-rgs.test`;
   page.on('pageerror',err=>console.error('Browser page error:',err.message));
+  page.on('console',msg=>{if(msg.type()==='error')console.error('Browser console error:',msg.text());});
+  page.on('requestfailed',req=>console.error('Browser request failed:',req.url(),req.failure()?.errorText));
   await page.goto(url);await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled).catch(async err=>{console.error('RGS initialization diagnostic:',JSON.stringify({calls,body:(await page.locator('body').innerText()).slice(0,1500)}));throw err;});
   assert.equal(await page.locator('#bet-select option').count(),3);assert.equal(await page.locator('.demo-tools').isVisible(),false);assert.equal(await page.locator('#top-payouts .payout-symbol').count(),10);
   await page.locator('#btn-spin').click();await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);assert.equal(calls.filter(c=>c.name==='/wallet/play').length,1);assert.equal(balance,balanceStart-10000+Math.round(book.payoutMultiplier*10000/100));assert.match(await page.locator('#total-win').innerText(),/^BTC /);
