@@ -16,7 +16,7 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
    const req=route.request(),name=new URL(req.url()).pathname;
    if(req.method()==='OPTIONS') { await route.fulfill({status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}}); return; }
    const body=req.method()==='POST'?req.postDataJSON():{};calls.push({name,body});let data;
-   if(name==='/wallet/authenticate')data={balance:{amount:body.sessionID==='low-funds'?1000:balance,currency:'BTC'},config:{minBet:10000,maxBet:100000000,stepBet:10000,defaultBetLevel:10000,betLevels:[10000,1000000,100000000]},jurisdictionFlags:{displayRTP:body.sessionID!=='rtp-hidden'},round:pending};
+   if(name==='/wallet/authenticate')data={balance:{amount:body.sessionID==='low-funds'?1000:balance,currency:'BTC'},config:{minBet:10000,maxBet:100000000,stepBet:10000,defaultBetLevel:10000,betLevels:body.sessionID==='step-only'?[]:[10000,1000000,100000000]},jurisdictionFlags:{displayRTP:body.sessionID!=='rtp-hidden'},round:pending};
    else if(name==='/wallet/play'){balance-=body.amount*(body.mode==='bonus'?100:1);pending={betID:1,amount:body.amount,payout:Math.round(book.payoutMultiplier*body.amount/100),payoutMultiplier:book.payoutMultiplier/100,mode:body.mode,active:true,state:book.events};data={balance:{amount:balance,currency:'BTC'},round:pending};}
    else if(name==='/wallet/end-round'){balance+=pending.payout;pending=null;data={balance:{amount:balance,currency:'BTC'}};}
    else if(name==='/bet/event'){pending.event=body.event;data={event:body.event};}
@@ -55,6 +55,14 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
   await page.locator('#btn-bonus-buy').click();await page.locator('#bonus-accept').click();
   assert.match(await page.locator('#win-log').innerText(),/Insufficient wallet balance/);
   assert.equal(calls.filter(c=>c.name==='/wallet/play').length,beforeInsufficient,'insufficient balance must not send paid play request');
-  console.log('PASS browser RGS: crypto payouts, replay validation, jurisdiction and insufficient balance protection');
+  await page.goto(`http://127.0.0.1:${port}/?sessionID=step-only&rgs_url=https%3A%2F%2Fmock-rgs.test`);
+  await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);
+  assert.equal(await page.locator('#bet-select').getAttribute('type'),'number');
+  assert.equal(await page.locator('#bet-value').innerText(),'BTC 0.01');
+  await page.locator('#bet-up').click();
+  assert.equal(await page.locator('#bet-value').innerText(),'BTC 0.02');
+  await page.locator('#bet-down').click();
+  assert.equal(await page.locator('#bet-value').innerText(),'BTC 0.01');
+  console.log('PASS browser RGS: wallet precision, rejected replay URLs, insufficient funds, and step-only bet controls');
  }finally{if(browser)await browser.close();server.kill();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
