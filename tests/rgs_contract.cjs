@@ -5,7 +5,7 @@ const mock=async(url,options)=>{const body=JSON.parse(options.body);calls.push([
 (async()=>{
  assert.equal(StakeMoney.format(1,'BTC'),'BTC 0.000001');assert.equal(StakeMoney.payout(10,10000),1000);assert.throws(()=>StakeMoney.safe(NaN));
  const client=new RGS(new URLSearchParams('sessionID=test&rgs_url=https://example.test'),mock);await client.authenticate();assert.throws(()=>client.validBet(20000));assert.throws(()=>client.validBet(100000001));
- const played=await client.play(10000,'bonus');assert.equal(calls.at(-1)[1].amount,10000);assert.equal(client.events(played.round)[0].amount,10);await assert.rejects(()=>client.play(10000,'base'));await client.checkpoint(0);await client.finish();assert.equal(client.round,null);
+ const played=await client.play(10000,'bonus');assert.equal(calls.at(-1)[1].amount,10000);assert.equal(client.events(played.round)[0].amount,10);assert.throws(()=>client.events({...round,payout:999}),/cash payout/);assert.throws(()=>client.events({...round,payoutMultiplier:0.2}),/payout does not match/);assert.throws(()=>client.events({...round,state:[{index:0,type:'finalWin',amount:-10}]}),/payout does not match/);await assert.rejects(()=>client.play(10000,'base'));await client.checkpoint(0);await client.finish();assert.equal(client.round,null);
  const count=calls.length;failure=true;await assert.rejects(()=>client.play(10000,'base'));assert.equal(calls.length,count+1);await assert.rejects(()=>client.play(10000,'base'));assert.equal(calls.length,count+1);
  console.log('PASS RGS contract: crypto precision, limits, ordinary bonus bet, settlement, no duplicate wager');
 })().catch(error=>{console.error(error);process.exitCode=1;});
