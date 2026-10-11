@@ -1741,6 +1741,45 @@ dialog::backdrop {background:#000b} dialog p {margin:14px 0} dialog button {padd
 /* Honor hidden controls even when component styles specify display. */
 [hidden] { display: none !important; }
 
+/* Miami after hours: oxidized metal, warm streetlight and restrained neon. */
+:root { --bg:#070e12; --panel:rgba(9,19,23,.96); --panel2:rgba(21,33,37,.96); --pink:#cf6a78; --pink-hot:#e18b86; --cyan:#78b6b5; --purple:#506e80; --gold:#e9bd79; --text-dim:#acb8b9; }
+body { background:#070e12; }
+body::before { filter:saturate(.58) contrast(1.12) brightness(.72); }
+body::after { background:linear-gradient(180deg,rgba(3,12,16,.1),rgba(3,12,16,.88)),radial-gradient(ellipse at 15% 35%,#ba785524,transparent 60%); }
+.bg-grid { opacity:.12; }
+.bg-glow { opacity:.35; }
+.location-tag { display:flex;justify-content:space-between;gap:12px;padding:10px 4px;color:var(--gold);font-size:10px;font-weight:700;letter-spacing:2px; }
+.location-tag span { color:var(--text-dim);font-weight:400;letter-spacing:1px; }
+.cabinet { position:relative;border-color:#587273;background:linear-gradient(145deg,#273234,#111b20 50%,#263236);box-shadow:0 18px 55px #0009,inset 0 1px #b4b7a840; }
+.reels-frame { border-color:#8d8b72;background:#081216; }
+.reel-cell { background:linear-gradient(160deg,#14272e,#09151b);border-color:#647c7938; }
+.top-payouts { border-color:#657c754a;background:#0b151ce8; }
+.logo-vice { color:#d9e5df;text-shadow:0 2px 0 #647c7b,0 0 18px #77aeaa44; }
+.logo-heist { color:var(--gold);text-shadow:0 0 16px #c1804433; }
+.reel-cell.landed { animation:heist-land .22s ease-out; }
+.reel-cell.win-cell { border-color:var(--gold);box-shadow:inset 0 0 20px #e9bd7926,0 0 8px #e9bd7930; }
+.reels-grid.anticipation { box-shadow:inset 0 0 30px #e9bd7930; }
+.heist-bonus .reels-frame { border-color:var(--gold);box-shadow:0 0 26px #d9923833; }
+.heist-transition { position:absolute;inset:0;z-index:8;display:grid;place-items:center;overflow:hidden;pointer-events:none;background:#091419f5;border-radius:inherit; }
+.vault-door { position:absolute;width:230px;height:230px;border-radius:50%;border:12px solid #607476;background:repeating-conic-gradient(#263b40 0deg 20deg,#18292e 20deg 40deg);box-shadow:0 0 0 8px #15262c,inset 0 0 0 35px #21343a;animation:vault-open .85s ease-in-out both; }
+.vault-door::after { content:'';position:absolute;inset:70px;border:8px solid #ac9e7e;border-radius:50%;background:#23383d; }
+.heist-caption { z-index:1;display:grid;gap:10px;text-align:center;padding:18px;text-shadow:0 2px 10px #000;background:#071216ba;width:100%; }
+.heist-caption span { font-size:10px;letter-spacing:3px;color:var(--gold); }
+.heist-caption strong { font-size:clamp(16px,4vw,32px);letter-spacing:3px; }
+.heist-caption p { font-size:12px;color:var(--gold); }
+.win-banner.big { border-color:var(--gold);background:linear-gradient(90deg,#172d33,#384237,#172d33);animation:heist-win .4s ease-out; }
+.win-banner[data-tier='MEGA WIN'],.win-banner[data-tier='EPIC WIN'] { box-shadow:0 0 25px #e9bd7940; }
+.audio-settings { display:flex;flex-wrap:wrap;gap:16px;border:1px solid #657c754a;border-radius:10px;padding:16px;margin:12px 0 20px; }
+.audio-settings legend { padding:0 8px;color:var(--gold);font-size:11px;letter-spacing:2px; }
+.audio-settings label { display:flex;align-items:center;gap:12px;flex:1 1 170px;font-size:14px; }
+.audio-settings input { min-width:0;width:100%;accent-color:var(--gold); }
+input:focus-visible { outline:2px solid var(--cyan);outline-offset:4px; }
+@keyframes heist-land { from { transform:translateY(-7px); } 65% { transform:translateY(3px); } to { transform:translateY(0); } }
+@keyframes vault-open { from { transform:rotate(-35deg) scale(.9);opacity:1; } to { transform:rotate(25deg) scale(1.2);opacity:.35; } }
+@keyframes heist-win { from { transform:translateY(5px);opacity:0; } to { transform:translateY(0);opacity:1; } }
+@media(max-width:650px) { .location-tag { font-size:9px;letter-spacing:1px;padding:6px 2px; }.location-tag span { display:none; }.vault-door { width:160px;height:160px; }.vault-door::after { inset:45px; } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important;transition:none !important; }.heist-transition { display:none; } }
+
 /* Mobile: keep the requested payouts above the reels without occupying four rows. */
 @media (max-width: 650px) {
   .top-payouts { margin: 5px 0 8px; padding: 6px; }

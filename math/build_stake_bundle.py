@@ -43,9 +43,8 @@ def board_from_grid(grid):
 
 
 def copy_frontend():
-    names = ('index.html', 'style.css', 'game.js', 'money.js', 'rgs.js')
-    # The original packaging tests provide the three legacy mandatory files.
-    required = names[:3]
+    names = ('index.html', 'style.css', 'game.js', 'money.js', 'rgs.js', 'audio.js')
+    required = names
     missing = [os.path.join(STATIC, n) for n in required if not Path(STATIC, n).is_file()]
     if not Path(STATIC, 'assets').is_dir(): missing.append(os.path.join(STATIC, 'assets'))
     if missing: raise FileNotFoundError('Missing frontend inputs: '+', '.join(missing))

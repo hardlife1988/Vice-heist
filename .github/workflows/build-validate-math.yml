@@ -38,10 +38,11 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Check frontend JavaScript syntax
         run: |
+          node --check static/audio.js
           node --check static/game.js
           node --check dist/game.js
       - name: Payout arithmetic tests
-        run: node --test tests/payout.test.js
+        run: node --test tests/payout.test.js tests/audio.test.js
       - name: RGS and crypto wallet contracts
         run: node tests/rgs_contract.cjs
       - name: Build calibrated bundle
@@ -60,6 +61,8 @@ jobs:
         run: python math/build_stake_bundle.py --release
       - name: Audit every production outcome
         run: python math/validate_bundle.py --publish release/math --release
+      - name: Analyze exact production volatility and bonus experience
+        run: python math/analyze_volatility.py
       - name: Four million rounds per bet and mode
         run: python math/stress_published.py
       - name: Verify independent release packages and simulation report
@@ -140,4 +143,5 @@ jobs:
             dist/books_*.json
             dist/lookUpTable_*.csv
             dist/game_config.json
+            docs/validation/volatility_report.json
           if-no-files-found: error

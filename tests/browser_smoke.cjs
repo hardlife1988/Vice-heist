@@ -281,7 +281,8 @@ async function main() {
     await expectReady(audioPage);
     assert.equal(await audioPage.locator('#btn-mute').getAttribute('aria-pressed'), 'false');
     await audioPage.locator('#btn-deposit').click();
-    assert.ok(await audioPage.evaluate(() => window.__smokeAudio.plays > 0), 'Demo deposit starts a sample voice');
+    await audioPage.evaluate(() => AudioFX.reelStop());
+    assert.ok(await audioPage.evaluate(() => window.__smokeAudio.plays > 0), 'Reel stop starts a sample voice');
     await audioPage.locator('#btn-mute').click();
     assert.equal(await audioPage.locator('#btn-mute').getAttribute('aria-pressed'), 'true');
     assert.ok(await audioPage.evaluate(() => window.__smokeAudio.pauses > 0), 'Mute pauses an existing sample voice');
@@ -299,10 +300,28 @@ async function main() {
         return realCreateOscillator.call(this);
       };
     });
-    await audioPage.locator('#btn-deposit').click();
+    await audioPage.evaluate(() => { HeistAudio.setLevel('music', 0); AudioFX.reelStop(); });
     await audioPage.waitForFunction(() => window.__smokeAudio.oscillators > 0);
     assert.deepEqual(audioPageErrors, [], 'Sample playback rejection is handled without uncaught errors');
+    await audioPage.locator('#btn-menu').click();
+    await audioPage.locator('#music-volume').fill('0');
+    await audioPage.locator('#effects-volume').fill('20');
+    assert.equal(await audioPage.evaluate(() => HeistAudio.level('music')), 0);
+    assert.equal(await audioPage.evaluate(() => HeistAudio.level('effects')), .2);
+    await audioPage.reload();
+    await expectReady(audioPage);
+    assert.equal(await audioPage.locator('#music-volume').inputValue(), '0');
+    assert.equal(await audioPage.locator('#effects-volume').inputValue(), '20');
+    // An actual motion-enabled reveal verifies the decorative transition clears
+    // and leaves wagering controls and authoritative results intact.
+    await audioPage.emulateMedia({ reducedMotion: 'no-preference' });
+    await playKnownRound(audioPage, 'base', 'win');
+    await audioPage.emulateMedia({ reducedMotion: 'reduce' });
+    await playKnownRound(audioPage, 'base', 'free-spins');
+    assert.equal(await audioPage.locator('#heist-transition').isVisible(), false);
+    assert.equal(await audioPage.evaluate(() => document.body.classList.contains('heist-bonus')), false);
     await audioPage.close();
+    console.log('PASS persisted audio levels, motion-enabled reveal and reduced-motion bonus cleanup');
     console.log('PASS audio lifecycle: mute pauses samples and rejected playback starts the tone fallback');
 
     const failedPage = await context.newPage();

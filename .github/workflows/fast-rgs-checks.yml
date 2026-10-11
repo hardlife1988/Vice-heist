@@ -27,12 +27,13 @@ jobs:
           node-version: '22'
       - name: Check production browser scripts
         run: |
+          node --check static/audio.js
           node --check static/game.js
           node --check static/rgs.js
           node --check static/money.js
       - name: Verify payout and RGS contracts
         run: |
-          node --test tests/payout.test.js
+          node --test tests/payout.test.js tests/audio.test.js
           node tests/rgs_contract.cjs
       - name: Verify no frontend secrets
         run: |

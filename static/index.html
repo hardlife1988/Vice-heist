@@ -16,6 +16,7 @@
   <div class="bg-glow" aria-hidden="true"></div>
 
   <main class="game-shell">
+    <p class="location-tag">MIAMI · AFTER HOURS <span>THE CITY SLEEPS. THE HEIST DOESN’T.</span></p>
 
     <!-- =====================================================
          TOP BAR
@@ -82,6 +83,9 @@
          ===================================================== -->
     <section class="cabinet">
 
+      <div class="heist-transition" id="heist-transition" hidden aria-hidden="true">
+        <div class="vault-door"></div><div class="heist-caption"><span>VICE HEIST · MIAMI</span><strong id="heist-title"></strong><p id="heist-detail"></p></div>
+      </div>
       <div class="cabinet-glow" aria-hidden="true"></div>
 
       <!-- REELS -->
@@ -345,6 +349,10 @@
       </div>
 
 
+      <fieldset class="audio-settings"><legend>SOUND SETTINGS</legend>
+        <label for="music-volume">Music <input id="music-volume" type="range" min="0" max="100" value="30"></label>
+        <label for="effects-volume">Effects <input id="effects-volume" type="range" min="0" max="100" value="70"></label>
+      </fieldset>
       <p id="rtp-details"></p><p id="payline-details"></p>
       <div class="info-grid">
 
@@ -435,6 +443,7 @@
 
   <script src="money.js"></script>
   <script src="rgs.js"></script>
+  <script src="audio.js"></script>
   <script src="game.js"></script>
 
 </body>

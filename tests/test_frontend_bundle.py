@@ -20,7 +20,7 @@ class FrontendBundleTests(unittest.TestCase):
         self.output = self.root / "dist"
         self.publish = self.root / "publish_files"
         self.source.mkdir()
-        for name in ("index.html", "style.css", "game.js"):
+        for name in ("index.html", "style.css", "game.js", "money.js", "rgs.js", "audio.js"):
             (self.source / name).write_text(f"source {name}", encoding="utf-8")
         self.assets = {
             "symbols/wild.webp": b"\x00\xffimage",
@@ -41,7 +41,7 @@ class FrontendBundleTests(unittest.TestCase):
 
     def test_clean_output_includes_recursive_binary_assets(self):
         bundle.copy_frontend()
-        for name in ("index.html", "style.css", "game.js"):
+        for name in ("index.html", "style.css", "game.js", "money.js", "rgs.js", "audio.js"):
             self.assertEqual(
                 (self.output / name).read_bytes(),
                 (self.source / name).read_bytes(),
@@ -84,7 +84,7 @@ class FrontendBundleTests(unittest.TestCase):
         self.output.mkdir()
         marker = self.output / "index.html"
         marker.write_text("existing output", encoding="utf-8")
-        for name in ("index.html", "style.css", "game.js", "assets"):
+        for name in ("index.html", "style.css", "game.js", "money.js", "rgs.js", "audio.js", "assets"):
             with self.subTest(name=name):
                 path = self.source / name
                 moved = self.source / f"missing-{name}"

@@ -12,14 +12,14 @@ def require(path):
     return path
 
 def main():
-    for name in ("index.html", "style.css", "game.js", "money.js", "rgs.js", "game_config.json"):
+    for name in ("index.html", "style.css", "game.js", "money.js", "rgs.js", "audio.js", "game_config.json"):
         require(FRONT / name)
     assets = FRONT / "assets"
     assert assets.is_dir() and any(p.is_file() for p in assets.rglob("*")), "Missing frontend assets"
     for pattern in ("books_*.json", "books_*.jsonl*", "lookUpTable_*.csv"):
         assert not list(FRONT.glob(pattern)), f"Production frontend contains local outcomes: {pattern}"
     html = (FRONT / "index.html").read_text()
-    for name in ("style.css", "game.js", "money.js", "rgs.js"):
+    for name in ("style.css", "game.js", "money.js", "rgs.js", "audio.js"):
         assert name in html, f"Frontend does not reference {name}"
     config = json.loads(require(FRONT / "game_config.json").read_text())
     assert config["requiresRGS"] is True, "Production frontend must require RGS"

@@ -73,23 +73,23 @@ const SAMPLE_PATHS = {
   scatter: 'assets/audio/scatter.wav',
   bonus: 'assets/audio/bonus.wav',
   win: 'assets/audio/win.wav',
-  click: 'assets/audio/reel_stop.wav'
+  click: null
 };
 const SAMPLE_AUDIO = {};
 const activeSamples = new Set();
 function playSample(name, fallback) {
-  if (state.muted || !SAMPLE_PATHS[name]) return false;
+  if (state.muted || !HeistAudio.effects() || !SAMPLE_PATHS[name]) return false;
   try {
     const sample = SAMPLE_AUDIO[name] || (SAMPLE_AUDIO[name] = new Audio(SAMPLE_PATHS[name]));
     const voice = sample.cloneNode();
-    voice.volume = name === 'click' ? 0.12 : 0.42;
+    voice.volume = 0.6 * HeistAudio.effects();
     activeSamples.add(voice);
     const release = () => activeSamples.delete(voice);
     voice.addEventListener('ended', release, { once: true });
     voice.addEventListener('error', release, { once: true });
     voice.play().catch(() => {
       release();
-      if (!state.muted) fallback();
+      if (!state.muted && !document.hidden) fallback();
     });
     return true;
   } catch (_) { return false; }
@@ -98,6 +98,7 @@ const AudioFX = {
   ctx: null, output: null,
   unlock() {
     if (state.muted) return;
+    HeistAudio.unlock();
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
@@ -108,15 +109,16 @@ const AudioFX = {
     if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
   },
   beep(freq, dur, type, gain, when) {
-    if (state.muted || !this.ctx) return;
+    if (state.muted || !this.ctx || !HeistAudio.effects()) return;
     const t = this.ctx.currentTime + (when || 0);
     const o = this.ctx.createOscillator();
     const g = this.ctx.createGain();
     o.type = type || 'square';
     o.frequency.setValueAtTime(freq, t);
-    g.gain.setValueAtTime(gain || 0.05, t);
+    g.gain.setValueAtTime((gain || 0.05) * HeistAudio.effects(), t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     o.connect(g); g.connect(this.output);
+    o.onended = () => { o.disconnect(); g.disconnect(); };
     o.start(t); o.stop(t + dur);
   },
   sample(name, fallback) {
@@ -124,13 +126,14 @@ const AudioFX = {
     if (!playSample(name, fallback)) fallback();
   },
   mute(on) {
+    HeistAudio.mute(on);
     if (this.output) this.output.gain.setValueAtTime(on ? 0 : 1, this.ctx.currentTime);
     if (on) {
       activeSamples.forEach(voice => { voice.pause(); voice.currentTime = 0; });
       activeSamples.clear();
     } else this.unlock();
   },
-  click() { this.sample('click', () => this.beep(420, 0.05, 'square', 0.04)); },
+  click() { this.unlock(); this.beep(760, 0.035, 'triangle', 0.04); },
   reelStop() { this.sample('reelStop', () => this.beep(180, 0.08, 'triangle', 0.07)); },
   scatter() { this.sample('scatter', () => { this.beep(880, 0.18, 'sine', 0.06); this.beep(1320, 0.22, 'sine', 0.04, 0.08); }); },
   win(amount, bet) {
@@ -278,8 +281,11 @@ function updateHUD() {
 function showWinBanner(amount) {
   clearTimeout(showWinBanner._t);
   if (amount <= 0) { $winBanner.style.display = 'none'; $winBanner.classList.remove('big'); return; }
-  const big = amount >= state.bet * 5;
-  $winBannerText.textContent = (big ? 'BIG WIN  ' : 'WIN  ') + fmt(amount);
+  const multiple = amount / state.bet;
+  const tier = multiple >= 500 ? 'EPIC WIN' : multiple >= 100 ? 'MEGA WIN' : multiple >= 20 ? 'BIG WIN' : 'WIN';
+  const big = multiple >= 20;
+  $winBanner.dataset.tier = tier;
+  $winBannerText.textContent = tier + '  ' + fmt(amount);
   $winBanner.classList.toggle('big', big);
   $winBanner.style.display = 'block';
   showWinBanner._t = setTimeout(() => { $winBanner.style.display = 'none'; }, 3500);
@@ -293,6 +299,15 @@ function setSpinning(on) {
   $btnBonusBuy.disabled = on || !state.ready;
   if($('bet-select')) $('bet-select').disabled=on;
   $reelsGrid.setAttribute('aria-busy', String(on));
+}
+
+async function vaultTransition(title, detail) {
+  const overlay = $('heist-transition');
+  $('heist-title').textContent = title;
+  $('heist-detail').textContent = detail;
+  if (reducedMotion.matches || state.turbo) return;
+  overlay.hidden = false;
+  try { await sleep(850); } finally { overlay.hidden = true; }
 }
 
 async function playReveal(event) {
@@ -344,16 +359,23 @@ async function playReveal(event) {
    */
   try {
     await sleep(500);
+    let landedScatters = 0;
     for (let reel = 0; reel < 5; reel++) {
       // Reels stop from left to right.
+      if (landedScatters >= 2 && !state.turbo) {
+        $reelsGrid.classList.add('anticipation');
+        await sleep(220);
+      }
       await sleep(180 + reel * 35);
       reelStates[reel].running = false;
       const col = board[reel] || [];
       for (let row = 0; row < 3; row++) paintCell(row, reel, col[row], 'landed');
       AudioFX.reelStop();
+      landedScatters += col.filter(sym => (typeof sym === 'object' ? sym?.name : sym) === 'S').length;
     }
   } finally {
     clearInterval(spinTimer);
+    $reelsGrid.classList.remove('anticipation');
   }
 }
 
@@ -373,7 +395,10 @@ async function playEvents(events) {
         break;
       }
       case 'freeSpinTrigger':
+        HeistAudio.bonus(true);
+        document.body.classList.add('heist-bonus');
         AudioFX.scatter();
+        await vaultTransition('THE VAULT IS OPEN', (ev.totalFs || 10) + ' FREE SPINS · 2× MULTIPLIER');
         $freeSpinsBar.style.display = 'block';
         $fsCount.textContent = ev.totalFs || 10;
         $btnSpin.classList.add('free-mode');
@@ -388,11 +413,15 @@ async function playEvents(events) {
         await sleep(80);
         break;
       case 'enterBonus':
+        HeistAudio.bonus(true);
+        document.body.classList.add('heist-bonus');
         AudioFX.bonus();
         $winLog.textContent = 'BONUS BUY — entering free spins';
         await sleep(300);
         break;
       case 'freeSpinEnd':
+        HeistAudio.bonus(false);
+        document.body.classList.remove('heist-bonus');
         $btnSpin.classList.remove('free-mode');
         $spinText.textContent = 'SPIN';
         $freeSpinsBar.style.display = 'none';
@@ -440,11 +469,12 @@ async function doPlay(mode) {
       else state.balance=StakeMoney.safe(state.balance+win);
       state.lastWin=StakeMoney.safe(win);updateHUD();
     }
-    $winLog.textContent=win>0?'Round win '+fmt(win):'No win — spin again!';
+    $winLog.textContent=win>0?'Round win '+fmt(win):'Round complete · No win';
   } catch(err) {
     console.error(err);$winLog.textContent=err.message;
     if(rgs){state.ready=false;$winLog.textContent+=' — Reload to recover your Stake session. Your wager will not be retried.';}
   } finally {
+    HeistAudio.bonus(false);document.body.classList.remove('heist-bonus');$('heist-transition').hidden=true;
     $btnSpin.classList.remove('free-mode');$spinText.textContent='SPIN';$freeSpinsBar.style.display='none';setSpinning(false);
   }
 }
@@ -453,14 +483,12 @@ function round2(n) { return Math.round(n * 100) / 100; }
 
 $btnBetDown.addEventListener('click', () => {
   AudioFX.click();
-  const idx = BET_PRESETS.findIndex(v => Math.abs(v - state.bet) < 0.001);
-  state.bet = BET_PRESETS[Math.max(0, idx - 1)];
+  if(rgs && !rgs.levels.length){state.bet=Math.max(rgs.config.minBet,state.bet-rgs.config.stepBet);}else {const idx=BET_PRESETS.indexOf(state.bet);state.bet=BET_PRESETS[Math.max(0,idx-1)];}
   updateHUD();
 });
 $btnBetUp.addEventListener('click', () => {
   AudioFX.click();
-  const idx = BET_PRESETS.findIndex(v => Math.abs(v - state.bet) < 0.001);
-  state.bet = BET_PRESETS[Math.min(BET_PRESETS.length - 1, idx + 1)];
+  if(rgs && !rgs.levels.length){state.bet=Math.min(rgs.config.maxBet,state.bet+rgs.config.stepBet);}else {const idx=BET_PRESETS.indexOf(state.bet);state.bet=BET_PRESETS[Math.min(BET_PRESETS.length-1,idx+1)];}
   updateHUD();
 });
 $btnMute.addEventListener('click', () => {
@@ -471,6 +499,25 @@ $btnMute.addEventListener('click', () => {
   $btnMute.setAttribute('aria-label', state.muted ? 'Unmute sound' : 'Mute sound');
   AudioFX.mute(state.muted);
 });
+for (const key of ['music', 'effects']) {
+  const slider = $(key + '-volume');
+  slider.value = Math.round(HeistAudio.level(key) * 100);
+  slider.addEventListener('input', () => {
+    HeistAudio.setLevel(key, Number(slider.value) / 100);
+    if (key === 'effects') {
+      activeSamples.forEach(voice => { voice.volume = 0.6 * HeistAudio.effects(); });
+      if (AudioFX.output) AudioFX.output.gain.setValueAtTime(state.muted || document.hidden ? 0 : 1, AudioFX.ctx.currentTime);
+    }
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    activeSamples.forEach(voice => voice.pause());
+    activeSamples.clear();
+  }
+  if (AudioFX.output) AudioFX.output.gain.setValueAtTime(state.muted || document.hidden ? 0 : 1, AudioFX.ctx.currentTime);
+});
+
 $btnTurbo.addEventListener('click', () => {
   state.turbo = !state.turbo;
   $btnTurbo.classList.toggle('active', state.turbo);
@@ -523,7 +570,7 @@ async function init() {
     const params=new URLSearchParams(location.search);
     if(params.get('replay')==='true') {
       const raw=params.get('rgs_url');if(!raw)throw Error('Missing replay RGS URL');
-      const url=new URL(raw.includes('://')?raw:'https://'+raw);if(url.protocol!=='https:' && !['localhost','127.0.0.1'].includes(url.hostname))throw Error('Invalid replay URL');
+      const url=new URL(raw.includes('://')?raw:'https://'+raw);if(url.protocol!=='https:' && !(url.protocol==='http:' && ['localhost','127.0.0.1'].includes(url.hostname)))throw Error('Invalid replay URL');if(url.username||url.password||url.search||url.hash)throw Error('Replay URL must not contain credentials, query, or fragment');
       const parts=['game','version','mode','event'].map(k=>{const value=params.get(k);if(!value)throw Error('Missing replay '+k);return encodeURIComponent(value);});
       const response=await fetch(url.href.replace(/\/$/,'')+'/bet/replay/'+parts.join('/'));if(!response.ok)throw Error('Replay unavailable');
       const data=await response.json();replayRound={events:StakeRGS.prototype.events.call(null,data)};
@@ -531,11 +578,11 @@ async function init() {
       document.querySelector('.demo-tools').hidden=true;$btnBonusBuy.hidden=true;$btnBetDown.hidden=true;$btnBetUp.hidden=true;document.querySelector('.hud-balance').hidden=true;$spinText.textContent='REPLAY';
     } else if(params.has('sessionID') || params.has('rgs_url')) {
       rgs=new StakeRGS(params);const auth=await rgs.authenticate();state.balance=auth.balance.amount;state.currency=auth.balance.currency;state.bet=auth.config.defaultBetLevel;
-      BET_PRESETS=rgs.levels.length?rgs.levels:[auth.config.minBet,auth.config.defaultBetLevel,auth.config.maxBet].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+      BET_PRESETS=rgs.levels.length?[...rgs.levels].sort((a,b)=>a-b):[auth.config.minBet,auth.config.defaultBetLevel,auth.config.maxBet].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
       document.querySelector('.demo-tools').hidden=true;
       if(auth.jurisdictionFlags?.disabledBuyFeature) $btnBonusBuy.hidden=true;
       const flags=auth.jurisdictionFlags||{};state.flags=flags;state.sessionStart=Date.now();state.sessionBalance=state.balance;
-      if(!flags.displayRTP){document.querySelector('.header-badge-rtp').hidden=true;$('rtp-details').hidden=true;}
+      if(flags.displayRTP===false){document.querySelector('.header-badge-rtp').hidden=true;$('rtp-details').hidden=true;document.querySelectorAll('.info-badges span').forEach(el=>{if(/RTP/i.test(el.textContent))el.hidden=true;});document.querySelectorAll('.paytable-note').forEach(el=>{el.textContent=el.textContent.replace(/Base and Bonus Buy modes are calibrated to a 96% RTP target\.\s*/,'').replace(/RTP is a long-run average, not a promise for a session\./,'');});}
       if(flags.displaySessionTimer || flags.displayNetPosition) setInterval(()=>{const details=[];if(flags.displaySessionTimer)details.push('Session '+Math.floor((Date.now()-state.sessionStart)/60000)+' min');if(flags.displayNetPosition)details.push('Net '+(state.balance<state.sessionBalance?'−':'+')+fmt(Math.abs(state.balance-state.sessionBalance)));$('session-details').textContent=details.join(' · ');},1000);
       if(flags.disabledTurbo){state.turbo=false;$btnTurbo.hidden=true;}
       const select=document.createElement('select');select.setAttribute('aria-label','Stake bet amount');select.id='bet-select';
