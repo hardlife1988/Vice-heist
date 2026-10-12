@@ -80,6 +80,17 @@ class FrontendBundleTests(unittest.TestCase):
             self.assets["audio/reel_stop.wav"],
         )
 
+    def test_repository_placeholders_are_excluded_and_stale_copies_removed(self):
+        for folder in ("audio", "backgrounds", "symbols", "ui"):
+            (self.source / "assets" / folder / ".gitkeep").write_text("")
+            stale = self.output / "assets" / folder / ".gitkeep"
+            stale.parent.mkdir(parents=True, exist_ok=True)
+            stale.write_text("")
+        bundle.copy_frontend()
+        self.assertEqual(list((self.output / "assets").rglob(".gitkeep")), [])
+        for name, data in self.assets.items():
+            self.assertEqual((self.output / "assets" / name).read_bytes(), data)
+
     def test_missing_source_fails_before_changing_output(self):
         self.output.mkdir()
         marker = self.output / "index.html"

@@ -20,5 +20,23 @@ const mock=async(url,options)=>{const body=JSON.parse(options.body);calls.push([
  const interrupted=async(url,options)=>{const result=url.endsWith('authenticate')?{balance:{amount:100000,currency:'BTC'},config:{minBet:10000,maxBet:10000,stepBet:10000,defaultBetLevel:10000,betLevels:[10000]},round:null}:url.endsWith('play')?{balance:{amount:90000,currency:'BTC'},round:endRound}:url.endsWith('end-round')?(++endFailures,Promise.reject(Error('end-round network failure'))):{};return {ok:true,json:async()=>result};};
  const interruptedClient=new RGS(new URLSearchParams('sessionID=interrupted&rgs_url=https://example.test'),interrupted);await interruptedClient.authenticate();await interruptedClient.play(10000,'base');await assert.rejects(()=>interruptedClient.finish(),/end-round network failure/);assert.equal(interruptedClient.recovery,true);assert.equal(interruptedClient.round,endRound);await assert.rejects(()=>interruptedClient.play(10000,'base'),/Finish or recover/);assert.equal(endFailures,1);
  const count=calls.length;failure=true;await assert.rejects(()=>client.play(10000,'base'));assert.equal(calls.length,count+1);await assert.rejects(()=>client.play(10000,'base'));assert.equal(calls.length,count+1);
- console.log('PASS RGS contract: crypto precision, limits, ordinary bonus bet, settlement, no duplicate wager');
+ // An interrupted response can still represent an accepted wager. Abort the
+ // transport, then require authentication/recovery rather than repeating it.
+ const timeoutCalls=[];
+ const stalled=async(url,options)=>{timeoutCalls.push(url);return new Promise((resolve,reject)=>{options.signal.addEventListener('abort',()=>reject(Error('aborted transport')),{once:true});});};
+ const timeoutClient=new RGS(new URLSearchParams('sessionID=timeout&rgs_url=https://example.test'),stalled,{timeoutMs:10});
+ timeoutClient.config=levelClient.config;
+ await assert.rejects(()=>timeoutClient.play(10000,'base'),/RGS request timed out/);
+ assert.equal(timeoutClient.busy,false);assert.equal(timeoutClient.recovery,true);
+ await assert.rejects(()=>timeoutClient.play(10000,'base'),/Finish or recover/);
+ assert.equal(timeoutCalls.length,1,'timed-out wager must not be resent');
+ timeoutClient.round=endRound;
+ await assert.rejects(()=>timeoutClient.finish(),/RGS request timed out/);
+ assert.equal(timeoutClient.round,endRound,'timed-out settlement must retain the pending round');
+ assert.equal(timeoutClient.recovery,true);
+ assert.equal(timeoutCalls.length,2,'timed-out settlement must not retry automatically');
+ // The timeout also covers reading a response body after headers arrive.
+ const bodyClient=new RGS(new URLSearchParams('sessionID=body-timeout&rgs_url=https://example.test'),async(url,options)=>({ok:true,json:()=>new Promise((resolve,reject)=>{options.signal.addEventListener('abort',()=>reject(Error('aborted body')),{once:true});})}),{timeoutMs:10});
+ await assert.rejects(()=>bodyClient.authenticate(),/RGS request timed out/);
+ console.log('PASS RGS contract: crypto precision, limits, ordinary bonus bet, settlement, bounded requests, no duplicate wager');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -51,7 +51,11 @@ def copy_frontend():
     Path(DIST).mkdir(parents=True, exist_ok=True)
     for n in names:
         if Path(STATIC, n).exists(): shutil.copyfile(Path(STATIC, n), Path(DIST, n))
-    shutil.copytree(Path(STATIC, 'assets'), Path(DIST, 'assets'), dirs_exist_ok=True)
+    shutil.copytree(Path(STATIC, 'assets'), Path(DIST, 'assets'), dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('.gitkeep'))
+    # Remove placeholders retained by an earlier build before hashing releases.
+    for placeholder in Path(DIST, 'assets').rglob('.gitkeep'):
+        if placeholder.is_file(): placeholder.unlink()
 
 
 class BookBuilder:

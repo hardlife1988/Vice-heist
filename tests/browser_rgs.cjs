@@ -1,6 +1,23 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),net=require('node:net');
 const {spawn}=require('node:child_process'),{once}=require('node:events'),{chromium}=require('playwright');
+async function expectWalletLayout(page, mode) {
+ for (const width of [320, 390, 1280]) {
+  await page.setViewportSize({width, height:844});
+  const layout=await page.evaluate(()=>{
+   const bounds=element=>({id:element.id||element.className,...Object.fromEntries(['left','right','top','bottom','width'].map(key=>[key,element.getBoundingClientRect()[key]]))});
+   const controls=[...document.querySelectorAll('button, input, select, .reels-frame, .control-rail')].filter(element=>element.getClientRects().length).map(bounds);
+   const bet=bounds(document.querySelector('.rail-bet'));
+   const betChildren=[...document.querySelectorAll('.rail-bet .bet-controls, #bet-select')].map(bounds);
+   return {viewport:innerWidth, document:document.documentElement.scrollWidth, controls, bet, betChildren};
+  });
+  const label=`${mode} wallet controls at ${width}px`;
+  assert.ok(layout.document<=layout.viewport,`${label}: horizontal page overflow ${JSON.stringify(layout)}`);
+  assert.deepEqual(layout.controls.filter(box=>box.left < -0.5 || box.right > layout.viewport+0.5),[],`${label}: controls outside viewport`);
+  assert.deepEqual(layout.betChildren.filter(box=>box.width<=0 || box.left < layout.bet.left-0.5 || box.right > layout.bet.right+0.5),[],`${label}: bet controls overflow their rail section`);
+ }
+ await page.setViewportSize({width:390,height:844});
+}
 (async()=>{
  const root=path.resolve(__dirname,'..');const socket=net.createServer().listen(0,'127.0.0.1');await once(socket,'listening');const port=socket.address().port;await new Promise(r=>socket.close(r));
  const server=spawn('python',['-m','http.server',String(port),'--bind','127.0.0.1','--directory',path.join(root,'dist')],{stdio:'ignore'});
@@ -30,6 +47,7 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
   page.on('requestfailed',req=>console.error('Browser request failed:',req.url(),req.failure()?.errorText));
   await page.goto(url);await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled).catch(async err=>{console.error('RGS initialization diagnostic:',JSON.stringify({calls,body:(await page.locator('body').innerText()).slice(0,1500)}));throw err;});
   assert.equal(await page.locator('#bet-select option').count(),3);assert.equal(await page.locator('.demo-tools').isVisible(),false);assert.equal(await page.locator('#top-payouts .payout-symbol').count(),10);
+  await expectWalletLayout(page,'preset');
   await page.locator('#btn-spin').click();await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);assert.equal(calls.filter(c=>c.name==='/wallet/play').length,1);assert.equal(balance,balanceStart-10000+Math.round(book.payoutMultiplier*10000/100));assert.match(await page.locator('#total-win').innerText(),/^BTC /);
   await page.locator('#btn-bonus-buy').click();await page.locator('#bonus-cancel').click();assert.equal(calls.filter(c=>c.name==='/wallet/play').length,1);
   await page.locator('#btn-bonus-buy').click();await page.locator('#bonus-accept').click();await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);assert.deepEqual(calls.filter(c=>c.name==='/wallet/play').at(-1).body,{sessionID:'test',amount:10000,mode:'bonus'});
@@ -58,6 +76,7 @@ const {spawn}=require('node:child_process'),{once}=require('node:events'),{chrom
   await page.goto(`http://127.0.0.1:${port}/?sessionID=step-only&rgs_url=https%3A%2F%2Fmock-rgs.test`);
   await page.waitForFunction(()=>!document.querySelector('#btn-spin').disabled);
   assert.equal(await page.locator('#bet-select').getAttribute('type'),'number');
+  await expectWalletLayout(page,'step-only');
   assert.equal(await page.locator('#bet-value').innerText(),'BTC 0.01');
   await page.locator('#bet-up').click();
   assert.equal(await page.locator('#bet-value').innerText(),'BTC 0.02');

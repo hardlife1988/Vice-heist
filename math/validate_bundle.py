@@ -9,8 +9,76 @@ from paytable import Symbol,Paytable
 from win_evaluator import WinEvaluator
 ROOT=Path(__file__).resolve().parent.parent
 
+def validate_event_sequence(book, mode):
+    """Verify the declared ten-spin feature and round lifecycle, not just payouts.
+
+    A cap may end free spins early. Free-game scatters pay but do not retrigger
+    in the existing game design.
+    """
+    assert mode in ('base', 'bonus')
+    events = book['events']
+    config = GameConfig()
+    cursor = 0
+    total = 0
+
+    def take(kind):
+        nonlocal cursor
+        assert cursor < len(events), f"Missing {kind} event"
+        event = events[cursor]
+        assert event['index'] == cursor and event['type'] == kind, (
+            f"Expected {kind} at event {cursor}"
+        )
+        cursor += 1
+        return event
+
+    def spin(game_type):
+        nonlocal total
+        reveal = take('reveal')
+        assert reveal['gameType'] == game_type
+        board = reveal['board']
+        assert len(board) == config.reels and all(len(col) == config.rows for col in board)
+        previous = total
+        has_win = cursor < len(events) and events[cursor]['type'] == 'winInfo'
+        if has_win:
+            take('winInfo')
+            take('setWin')
+        total = take('setTotalWin')['amount']
+        assert isinstance(total, int) and previous <= total <= MAX_UNITS
+        assert has_win == (total > previous)
+        if total == MAX_UNITS:
+            assert take('wincap')['amount'] == MAX_UNITS
+        return board
+
+    positions = []
+    feature = mode == 'bonus'
+    if mode == 'base':
+        board = spin('basegame')
+        positions = [
+            {'reel': reel, 'row': row}
+            for row in range(config.rows) for reel in range(config.reels)
+            if board[reel][row]['name'] == Symbol.SCATTER.value
+        ]
+        feature = len(positions) >= config.free_spins_trigger
+    if feature and total < MAX_UNITS:
+        trigger = take('freeSpinTrigger')
+        assert trigger['totalFs'] == config.free_spins_count
+        assert trigger['positions'] == positions
+        if mode == 'bonus':
+            assert take('enterBonus')['reason'] == 'bonusBuy'
+        base_total = total
+        for number in range(1, config.free_spins_count + 1):
+            update = take('updateFreeSpin')
+            assert update['amount'] == number and update['total'] == config.free_spins_count
+            spin('freegame')
+            if total == MAX_UNITS:
+                break
+        assert take('freeSpinEnd')['amount'] == total - base_total
+    assert take('finalWin')['amount'] == total == book['payoutMultiplier']
+    assert cursor == len(events), 'Events remain after finalWin'
+
 def audit(directory,mode,cost,release=False):
-    rows=[tuple(map(int,r)) for r in csv.reader((directory/f'lookUpTable_{mode}.csv').open())]
+    with (directory/f'lookUpTable_{mode}.csv').open(newline='') as lookup:
+        rows=[tuple(map(int,r)) for r in csv.reader(lookup)]
     assert len(rows)>= (100000 if release else 1)
     assert all(i==j+1 and 0<w<2**64 and p%10==0 and 0<=p<=MAX_UNITS for j,(i,w,p) in enumerate(rows))
     total_weight=sum(w for _,w,_ in rows);assert total_weight<2**64
@@ -18,6 +86,7 @@ def audit(directory,mode,cost,release=False):
     with (directory/f'books_{mode}.jsonl.zst').open('rb') as compressed, zstandard.ZstdDecompressor().stream_reader(compressed) as stream:
       for line in io.TextIOWrapper(stream):
         b=json.loads(line);i,w,p=rows[count];assert (b['id'],b['payoutMultiplier'])==(i,p)
+        validate_event_sequence(b, mode)
         total=0;spin=None;free=0;is_free=False;finals=0;raw=[];remaining=MAX_UNITS
         for index,e in enumerate(b['events']):
           assert e['index']==index
