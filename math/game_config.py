@@ -13,11 +13,16 @@ class GameConfig:
         self.max_bet          = 100.00
         self.default_bet      = 1.00
         self.rtp              = 0.96
-        self.volatility       = "HIGH"
+        self.volatility       = "MEDIUM"
         self.max_win          = 10000  # x total bet
         self.free_spins_trigger = 3   # 3+ scatters anywhere
         self.free_spins_count   = 10
-        self.free_spins_multiplier = 2.0
+        self.free_spins_retrigger = 3  # +3 spins per 3 scatters, anywhere
+        self.free_spins_max = 30  # hard stop so retriggers cannot run forever
+        self.free_spins_multiplier = 2
+        self.free_spins_multiplier_cap = 5
+        # Expanding Safe/BOOK is intentionally not a feature. Do not advertise it.
+        self.expanding_symbol = None
         self.bonus_vault_available = True
         self.bonus_buy_cost   = 100   # x total bet
 

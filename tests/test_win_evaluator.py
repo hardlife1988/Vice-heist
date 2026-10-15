@@ -28,14 +28,14 @@ class WinEvaluatorTests(unittest.TestCase):
         )
         self.assertEqual(result["symbol_key"], "G")
         self.assertEqual(result["count"], 5)
-        self.assertEqual(result["win"], 7.4)
+        self.assertEqual(result["win"], 8.0)
 
     def test_all_wild_line(self):
         result = self.evaluator._evaluate_payline(
             grid_with_middle_line([W] * 5), [1] * 5, 1, 1
         )
         self.assertEqual(result["symbol_key"], "W")
-        self.assertEqual(result["win"], 79.5)
+        self.assertEqual(result["win"], 25.0)
 
     def test_scatter_triggers(self):
         grid = [[H] * 5 for _ in range(3)]

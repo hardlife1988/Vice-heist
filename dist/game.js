@@ -140,7 +140,9 @@ const AudioFX = {
     this.sample('win', () => {
       this.beep(520, 0.12, 'triangle', 0.06);
       this.beep(780, 0.16, 'triangle', 0.05, 0.08);
-      if (amount >= bet * 5) this.beep(1040, 0.28, 'sawtooth', 0.04, 0.16);
+      if (amount >= bet * 5) this.beep(1040, 0.22, 'triangle', 0.045, 0.14);
+      if (amount >= bet * 20) this.beep(1318, 0.28, 'sawtooth', 0.04, 0.24);
+      if (amount >= bet * 100) this.beep(1568, 0.36, 'square', 0.03, 0.36);
     });
   },
   bonus() {
@@ -151,7 +153,8 @@ const AudioFX = {
 };
 
 function sleep(ms) {
-  return new Promise(r => setTimeout(r, reducedMotion.matches ? 0 : state.turbo ? ms / 4 : ms));
+  const wait = reducedMotion.matches || state.slam ? 0 : state.turbo ? ms / 4 : ms;
+  return new Promise(r => setTimeout(r, wait));
 }
 function fmt(n) { return StakeMoney.format(n, state.currency); }
 function centsToCash(units) { return StakeMoney.payout(units, state.bet); }
@@ -165,7 +168,7 @@ function renderPaytable() {
     const img = document.createElement('img'); img.src = SYMBOL_ASSETS[code]; img.alt = SYMBOL_NAME[code]; card.append(img);
     const text = document.createElement('div'); const name = document.createElement('strong'); name.textContent=SYMBOL_NAME[code];text.append(name);
     const row = document.createElement('tr');const label=document.createElement('td');label.textContent=SYMBOL_NAME[code];row.append(label);
-    if(code==='S') {const description=document.createElement('span');description.textContent='3+ → 10 free spins';text.append(description);const td=document.createElement('td');td.colSpan=3;td.textContent='3 / 4 / 5+ anywhere: 2× / 5× / 10× + 10 free spins';row.append(td);}
+    if(code==='S') {const description=document.createElement('span');description.textContent='3+ → 10 free spins';text.append(description);const td=document.createElement('td');td.colSpan=3;td.textContent='3 / 4 / 5+ anywhere: 2× / 5× / 10× + 10 free spins. Every 3 scatters adds 3 spins, max 30';row.append(td);}
     else for(const count of [3,4,5]) {const value=math.config.paytable[code][count];const line=document.createElement('span');line.textContent=count+' · '+value+'×';text.append(line);const td=document.createElement('td');td.textContent=value+'×';row.append(td);}
     card.append(text);top.append(card);body.append(row);
   }
@@ -398,7 +401,7 @@ async function playEvents(events) {
         HeistAudio.bonus(true);
         document.body.classList.add('heist-bonus');
         AudioFX.scatter();
-        await vaultTransition('THE VAULT IS OPEN', (ev.totalFs || 10) + ' FREE SPINS · 2× MULTIPLIER');
+        await vaultTransition('THE VAULT IS OPEN', (ev.totalFs || 10) + ' FREE SPINS · STARTS AT ' + (ev.multiplier || 2) + '×');
         $freeSpinsBar.style.display = 'block';
         $fsCount.textContent = ev.totalFs || 10;
         $btnSpin.classList.add('free-mode');
@@ -409,8 +412,18 @@ async function playEvents(events) {
       case 'updateFreeSpin':
         $freeSpinsBar.style.display = 'block';
         $fsCount.textContent = `${ev.amount}/${ev.total}`;
+        if ($('fs-mult')) $('fs-mult').textContent = `×${ev.multiplier || 2} MULTIPLIER`;
         $spinText.textContent = 'FREE';
         await sleep(80);
+        break;
+      case 'setMultiplier':
+        if ($('fs-mult')) $('fs-mult').textContent = `×${ev.amount} MULTIPLIER`;
+        break;
+      case 'freeSpinRetrigger':
+        AudioFX.scatter();
+        $fsCount.textContent = ev.totalFs;
+        $winLog.textContent = `+${ev.extra} FREE SPINS`;
+        await sleep(280);
         break;
       case 'enterBonus':
         HeistAudio.bonus(true);
@@ -440,7 +453,12 @@ async function playEvents(events) {
 }
 
 async function doPlay(mode) {
-  if (state.spinning || !state.ready) return;
+  if (state.spinning) {
+    if (!state.flags?.disabledSlamstop) state.slam = true;
+    return;
+  }
+  if (!state.ready) return;
+  state.slam = false;
   AudioFX.unlock();
   if(replayRound){setSpinning(true);state.lastWin=0;try{await playEvents(replayRound.events);$winLog.textContent='Replay complete — no wager placed.';}finally{setSpinning(false);$spinText.textContent='REPLAY';}return;}
   if(mode==='bonus'&&state.flags?.disabledBuyFeature)return;
@@ -479,6 +497,15 @@ async function doPlay(mode) {
   }
 }
 
+function applySocialCopy() {
+  const swaps = [['TOTAL BET', 'TOTAL PLAY'], ['BET', 'PLAY'], ['Buy bonus', 'Play bonus'], ['Buy free spins?', 'Play free spins?']];
+  document.querySelectorAll('span, button, h2, label, p').forEach(el => {
+    if (el.children.length) return;
+    let text = el.textContent;
+    for (const [from, to] of swaps) if (text.includes(from)) text = text.replace(from, to);
+    el.textContent = text;
+  });
+}
 function round2(n) { return Math.round(n * 100) / 100; }
 
 $btnBetDown.addEventListener('click', () => {
@@ -581,7 +608,8 @@ async function init() {
       BET_PRESETS=rgs.levels.length?[...rgs.levels].sort((a,b)=>a-b):[auth.config.minBet,auth.config.defaultBetLevel,auth.config.maxBet].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
       document.querySelector('.demo-tools').hidden=true;
       if(auth.jurisdictionFlags?.disabledBuyFeature) $btnBonusBuy.hidden=true;
-      const flags=auth.jurisdictionFlags||{};state.flags=flags;state.sessionStart=Date.now();state.sessionBalance=state.balance;
+      const flags=auth.config?.jurisdiction||auth.jurisdictionFlags||{};state.flags=flags;state.sessionStart=Date.now();state.sessionBalance=state.balance;
+      if(flags.socialCasino||params.get('social')==='true') applySocialCopy();
       if(flags.displayRTP===false){document.querySelector('.header-badge-rtp').hidden=true;$('rtp-details').hidden=true;document.querySelectorAll('.info-badges span').forEach(el=>{if(/RTP/i.test(el.textContent))el.hidden=true;});document.querySelectorAll('.paytable-note').forEach(el=>{el.textContent=el.textContent.replace(/Base and Bonus Buy modes are calibrated to a 96% RTP target\.\s*/,'').replace(/RTP is a long-run average, not a promise for a session\./,'');});}
       if(flags.displaySessionTimer || flags.displayNetPosition) setInterval(()=>{const details=[];if(flags.displaySessionTimer)details.push('Session '+Math.floor((Date.now()-state.sessionStart)/60000)+' min');if(flags.displayNetPosition)details.push('Net '+(state.balance<state.sessionBalance?'−':'+')+fmt(Math.abs(state.balance-state.sessionBalance)));$('session-details').textContent=details.join(' · ');},1000);
       if(flags.disabledTurbo){state.turbo=false;$btnTurbo.hidden=true;}

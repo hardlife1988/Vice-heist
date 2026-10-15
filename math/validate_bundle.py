@@ -10,10 +10,11 @@ from win_evaluator import WinEvaluator
 ROOT=Path(__file__).resolve().parent.parent
 
 def validate_event_sequence(book, mode):
-    """Verify the declared ten-spin feature and round lifecycle, not just payouts.
+    """Verify the feature lifecycle, not just payouts.
 
-    A cap may end free spins early. Free-game scatters pay but do not retrigger
-    in the existing game design.
+    Free spins start at 10 and 2×. A winning free spin raises the next multiplier
+    by 1, up to 5×. Every 3 scatters anywhere adds 3 spins, up to 30 total.
+    There is no expanding symbol. A 10,000× cap may end the feature early.
     """
     assert mode in ('base', 'bonus')
     events = book['events']
@@ -63,15 +64,36 @@ def validate_event_sequence(book, mode):
         trigger = take('freeSpinTrigger')
         assert trigger['totalFs'] == config.free_spins_count
         assert trigger['positions'] == positions
+        assert trigger['multiplier'] == config.free_spins_multiplier
         if mode == 'bonus':
             assert take('enterBonus')['reason'] == 'bonusBuy'
         base_total = total
-        for number in range(1, config.free_spins_count + 1):
+        awarded = config.free_spins_count
+        expected_mult = config.free_spins_multiplier
+        number = 0
+        while number < awarded:
+            number += 1
             update = take('updateFreeSpin')
-            assert update['amount'] == number and update['total'] == config.free_spins_count
-            spin('freegame')
+            assert update['amount'] == number and update['total'] == awarded
+            assert update['multiplier'] == expected_mult
+            assert take('setMultiplier')['amount'] == expected_mult
+            before = total
+            board = spin('freegame')
             if total == MAX_UNITS:
                 break
+            if total > before and expected_mult < config.free_spins_multiplier_cap:
+                expected_mult += 1
+            scatters = sum(cell['name'] == Symbol.SCATTER.value for column in board for cell in column)
+            room = config.free_spins_max - awarded
+            extra_spins = 0 if room <= 0 or scatters < config.free_spins_trigger else min(
+                (scatters // config.free_spins_trigger) * config.free_spins_retrigger, room)
+            if extra_spins:
+                extra = take('freeSpinRetrigger')
+                assert extra['extra'] == extra_spins
+                awarded += extra['extra']
+                assert extra['totalFs'] == awarded <= config.free_spins_max
+            elif cursor < len(events) and events[cursor]['type'] == 'freeSpinRetrigger':
+                raise AssertionError('Retrigger does not match the board')
         assert take('freeSpinEnd')['amount'] == total - base_total
     assert take('finalWin')['amount'] == total == book['payoutMultiplier']
     assert cursor == len(events), 'Events remain after finalWin'
@@ -87,16 +109,19 @@ def audit(directory,mode,cost,release=False):
       for line in io.TextIOWrapper(stream):
         b=json.loads(line);i,w,p=rows[count];assert (b['id'],b['payoutMultiplier'])==(i,p)
         validate_event_sequence(b, mode)
-        total=0;spin=None;free=0;is_free=False;finals=0;raw=[];remaining=MAX_UNITS
+        total=0;spin=None;free=0;is_free=False;finals=0;raw=[];remaining=MAX_UNITS;pending_mult=1
         for index,e in enumerate(b['events']):
           assert e['index']==index
           kind=e['type']
-          if kind=='reveal':
+          if kind=='setMultiplier':
+            pending_mult=e['amount']
+          elif kind=='reveal':
             if spin is not None: assert spin==0
             board=e['board'];assert len(board)==5 and all(len(c)==3 for c in board)
             grid=[[Symbol(board[r][y]['name']) for r in range(5)] for y in range(3)]
             is_free=e['gameType']=='freegame'
-            result=evaluator.evaluate_spin(grid,1.0,2 if is_free else 1)
+            result=evaluator.evaluate_spin(grid,1.0,pending_mult if is_free else 1)
+            pending_mult=1
             raw=[];remaining=MAX_UNITS-total
             for linewin in result['payline_wins']:
               value=min(to_cents(linewin['win']),remaining)
@@ -120,7 +145,7 @@ def audit(directory,mode,cost,release=False):
           elif kind=='wincap': assert total==MAX_UNITS and e['amount']==MAX_UNITS
           elif kind=='freeSpinEnd': assert e['amount']==free
           elif kind=='finalWin':finals+=1;assert e['amount']==total==p
-          elif kind not in ('freeSpinTrigger','enterBonus','updateFreeSpin'):raise ValueError('Unknown event '+kind)
+          elif kind not in ('freeSpinTrigger','enterBonus','updateFreeSpin','freeSpinRetrigger','setMultiplier'):raise ValueError('Unknown event '+kind)
         assert finals==1
         count+=1
     assert count==len(rows)
@@ -128,7 +153,10 @@ def audit(directory,mode,cost,release=False):
     cap=sum(w for _,w,p in rows if p==MAX_UNITS)/total_weight
     hit=sum(w for _,w,p in rows if p>0)/total_weight
     assert abs(rtp-.96)<1e-6 and max(p for _,_,p in rows)==MAX_UNITS
-    assert cap>=1e-7 and hit>=.05
+    if release:
+        assert abs(cap - 2e-7) < 1e-9 and hit >= .05
+    else:
+        assert cap > 0
     return dict(mode=mode,books=count,rtp=rtp,cap_probability=cap,win_probability=hit,all_events_verified=True)
 
 def main():

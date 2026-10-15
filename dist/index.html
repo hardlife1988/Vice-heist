@@ -41,7 +41,7 @@
     </header>
 
 
-    <section class="top-payouts" aria-label="Symbol payouts"><div id="top-payouts"></div><p>3 / 4 / 5 matching symbols · multipliers of total bet · free spins pay 2×</p></section>
+    <section class="top-payouts" aria-label="Symbol payouts"><div id="top-payouts"></div><p>3 / 4 / 5 matching symbols · multipliers of total bet · free spins start at 2× and climb</p></section>
 
     <!-- =====================================================
          WIN BANNER
@@ -72,7 +72,7 @@
         <strong id="fs-count">0</strong>
       </span>
 
-      <span class="fs-mult">
+      <span class="fs-mult" id="fs-mult">
         ×2 MULTIPLIER
       </span>
     </div>
@@ -308,7 +308,7 @@
     </div>
 
 
-    <dialog id="bonus-confirm"><h2>Buy free spins?</h2><p id="bonus-confirm-cost"></p><p>10 free spins at 2×. Maximum round win: 10,000× the ordinary bet. This purchase can return zero.</p><button id="bonus-cancel" type="button">Cancel</button><button id="bonus-accept" type="button">Buy bonus</button></dialog>
+    <dialog id="bonus-confirm"><h2>Buy free spins?</h2><p id="bonus-confirm-cost"></p><p>10 free spins starting at 2×. Wins raise the multiplier up to 5×. Every 3 scatters adds 3 spins, up to 30 total. Maximum round win: 10,000× the ordinary bet, about 1 in 5 million rounds. This purchase can return zero.</p><button id="bonus-cancel" type="button">Cancel</button><button id="bonus-accept" type="button">Buy bonus</button></dialog>
     <!-- =====================================================
          GAME INFORMATION
          ===================================================== -->
@@ -378,9 +378,10 @@
 
           <p>
             3 or more Scatter symbols trigger 10 Free Spins.
-            Free Spin wins use a 2× multiplier. There is no expansion or retrigger.
+            Free spins start at 2×. Each winning free spin raises the next spin by 1×, up to 5×.
+            Every 3 Scatters anywhere during free spins adds 3 spins. This can happen more than once, but the feature stops at 30 spins. There is no expanding symbol.
             Scatter cash pays anywhere in addition to line wins: 3 = 2×, 4 = 5×, 5+ = 10×.
-            The round ends immediately when the cumulative 10,000× cap is reached.
+            The round ends immediately at the 10,000× cap. That cap is published at about 1 in 5 million rounds.
           </p>
 
         </article>
@@ -394,7 +395,7 @@
 
           <p>
             Bonus Buy costs 100× the selected bet and
-            enters 10 Free Spins at 2× after confirmation. It can return zero.
+            enters the same free-spin feature after confirmation. It can return zero.
           </p>
 
         </article>
@@ -428,12 +429,11 @@
 
 
       <p class="paytable-note">
-        Demo mode uses precomputed weighted game books and demo chips.
-        Stake sessions use the platform wallet and returned currency.
-        Base and Bonus Buy modes are calibrated to a 96% RTP target.
-        Maximum win is 10,000× bet.
-        Multipliers refer to the ordinary total bet. Only the highest qualifying
-        symbol win on each payline pays. RTP is a long-run average, not a promise for a session.
+        Demo mode uses precomputed weighted game books and demo chips. Demo chips cannot be withdrawn.
+        A Stake session uses the platform wallet only. The game never decides the result.
+        Both modes are calibrated to a 96% long-run RTP. That is not a promise for any session.
+        Maximum win is 10,000× the ordinary bet, published at about 1 in 5 million rounds.
+        Only the highest qualifying symbol on each payline pays. Nothing on screen is a near-miss that the book did not deal.
       </p>
 
     </section>

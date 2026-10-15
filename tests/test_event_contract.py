@@ -42,6 +42,31 @@ class EventContractTests(unittest.TestCase):
         finally:
             random.setstate(state)
 
+    def test_retrigger_and_multiplier_are_board_driven(self):
+        builder = BookBuilder()
+        heart = __import__('paytable', fromlist=['Symbol']).Symbol.HEART
+        scatter = __import__('paytable', fromlist=['Symbol']).Symbol.SCATTER
+        wild = __import__('paytable', fromlist=['Symbol']).Symbol.WILD
+
+        def scripted(_mode, free_index):
+            grid = [[heart] * 5 for _ in range(3)]
+            if free_index == 0:
+                grid[1] = [wild, wild, wild, heart, heart]
+                grid[0][0] = grid[0][1] = grid[0][2] = scatter
+            elif free_index == 1:
+                grid[1] = [wild, wild, wild, wild, heart]
+            return grid
+
+        builder._grid = scripted
+        book = builder.build_round(1, 'base', None)
+        validate_event_sequence(book, 'base')
+        multipliers = [e['amount'] for e in book['events'] if e['type'] == 'setMultiplier']
+        self.assertEqual(multipliers[0], 2)
+        self.assertEqual(multipliers[1], 3)
+        self.assertEqual(next(e['extra'] for e in book['events'] if e['type'] == 'freeSpinRetrigger'), 3)
+        self.assertEqual(next(e['totalFs'] for e in book['events'] if e['type'] == 'freeSpinRetrigger'), 13)
+        self.assertEqual(sum(e['type'] == 'updateFreeSpin' for e in book['events']), 13)
+
     def test_wrong_trigger_count_or_positions(self):
         for field, value in [('totalFs', 999), ('positions', [])]:
             book = copy.deepcopy(self.base)
@@ -100,16 +125,25 @@ class EventContractTests(unittest.TestCase):
             random.seed(1988)
             while True:
                 ordinary = self.builder.build_round(2, 'base')
-                if ordinary['payoutMultiplier'] == 10:
+                if ordinary['criteria'] == 'basegame' and 0 < ordinary['payoutMultiplier'] < 1000:
                     break
         finally:
             random.setstate(state)
+        payout = ordinary['payoutMultiplier']
+        win_weight = 1
+        while ((payout - 96) * win_weight + 999904) % 96:
+            win_weight += 1
+        loss_weight = ((payout - 96) * win_weight + 999904) // 96
         books = [self.builder.build_round(1, 'base', ('loss', 0, 0)), ordinary,
                  self.builder.build_round(3, 'base', ('maxwin', 10, 0))]
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)
             with (path / 'lookUpTable_base.csv').open('w', newline='') as file:
-                csv.writer(file).writerows([(1, 4999090, 0), (2, 5000000, 10), (3, 910, 1000000)])
+                csv.writer(file).writerows([
+                    (1, loss_weight, 0),
+                    (2, win_weight, payout),
+                    (3, 1, 1000000),
+                ])
 
             def write_books():
                 data = ''.join(json.dumps(b) + '\n' for b in books).encode()

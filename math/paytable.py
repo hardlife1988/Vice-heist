@@ -27,16 +27,18 @@ class Paytable:
     # Lookup weights, rather than these nominal line values, determine RTP.
     # RGS verifier requires final payouts in 0.1x increments. All line
     # awards use that same quantum, so line, spin and round totals are exact.
+    # Minimum line hits start at 0.4× so a common win is worth noticing.
+    # 4-kind and 5-kind step through 1×–25× instead of jumping from dust to a spike.
     SYMBOL_PAYS = {
-        Symbol.WILD:     {3: 0.6, 4: 4.3, 5: 79.5},
-        Symbol.BOOK:     {3: 0.3, 4: 1.6, 5: 16.0},
-        Symbol.GOLD_BAR: {3: 0.1, 4: 0.8, 5: 7.4},
-        Symbol.DIAMOND:  {3: 0.1, 4: 0.6, 5: 4.8},
-        Symbol.RUBY:     {3: 0.1, 4: 0.4, 5: 3.2},
-        Symbol.EMERALD:  {3: 0.1, 4: 0.3, 5: 2.1},
-        Symbol.CLUB:     {3: 0.1, 4: 0.2, 5: 1.1},
-        Symbol.SPADE:    {3: 0.1, 4: 0.2, 5: 0.6},
-        Symbol.HEART:    {3: 0.1, 4: 0.2, 5: 0.6},
+        Symbol.WILD:     {3: 1.0, 4: 4.0, 5: 25.0},
+        Symbol.BOOK:     {3: 0.8, 4: 2.5, 5: 12.0},
+        Symbol.GOLD_BAR: {3: 0.6, 4: 2.0, 5: 8.0},
+        Symbol.DIAMOND:  {3: 0.5, 4: 1.5, 5: 6.0},
+        Symbol.RUBY:     {3: 0.5, 4: 1.2, 5: 4.5},
+        Symbol.EMERALD:  {3: 0.4, 4: 1.0, 5: 3.0},
+        Symbol.CLUB:     {3: 0.4, 4: 0.8, 5: 2.0},
+        Symbol.SPADE:    {3: 0.4, 4: 0.8, 5: 1.6},
+        Symbol.HEART:    {3: 0.4, 4: 0.8, 5: 1.6},
     }
 
     # 20 paylines for a 5-reel, 3-row grid
