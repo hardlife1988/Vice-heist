@@ -322,8 +322,8 @@ body::after {
 
   padding: 5px;
 
-  border: 3px solid #ff4adf;
-  border-radius: 12px;
+  border: 4px solid #e8c27a;
+  border-radius: 14px;
 
   background:
     linear-gradient(
@@ -1761,7 +1761,14 @@ body::after { background:linear-gradient(180deg,rgba(3,12,16,.1),rgba(3,12,16,.8
 .logo-heist { color:var(--gold);text-shadow:0 0 16px #c1804433; }
 .reel-cell.landed { animation:heist-land .22s ease-out; }
 .reel-cell.win-cell { border-color:var(--gold);box-shadow:inset 0 0 20px #e9bd7926,0 0 8px #e9bd7930; }
-.reels-grid.anticipation { box-shadow:inset 0 0 30px #e9bd7930; }
+.reels-grid.anticipation { animation: anticipate-pulse 0.7s ease-in-out infinite; }
+@keyframes anticipate-pulse {
+  50% { box-shadow: inset 0 0 34px rgba(46, 230, 255, 0.62); }
+}
+.win-banner[data-tier='NICE WIN'] { border-color: #2ee6ff; }
+.win-banner[data-tier='BIG WIN'] { border-color: var(--gold); }
+.win-banner[data-tier='MEGA WIN'],
+.win-banner[data-tier='EPIC WIN'] { border-color: #ff2bd6; box-shadow: 0 0 28px rgba(255, 43, 214, 0.45); }
 .heist-bonus .reels-frame { border-color:var(--gold);box-shadow:0 0 26px #d9923833; }
 .heist-transition { position:absolute;inset:0;z-index:8;display:grid;place-items:center;overflow:hidden;pointer-events:none;background:#091419f5;border-radius:inherit; }
 .vault-door { position:absolute;width:230px;height:230px;border-radius:50%;border:12px solid #607476;background:repeating-conic-gradient(#263b40 0deg 20deg,#18292e 20deg 40deg);box-shadow:0 0 0 8px #15262c,inset 0 0 0 35px #21343a;animation:vault-open .85s ease-in-out both; }

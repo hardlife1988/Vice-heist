@@ -285,13 +285,13 @@ function showWinBanner(amount) {
   clearTimeout(showWinBanner._t);
   if (amount <= 0) { $winBanner.style.display = 'none'; $winBanner.classList.remove('big'); return; }
   const multiple = amount / state.bet;
-  const tier = multiple >= 500 ? 'EPIC WIN' : multiple >= 100 ? 'MEGA WIN' : multiple >= 20 ? 'BIG WIN' : 'WIN';
-  const big = multiple >= 20;
+  const tier = multiple >= 500 ? 'EPIC WIN' : multiple >= 100 ? 'MEGA WIN' : multiple >= 20 ? 'BIG WIN' : multiple >= 5 ? 'NICE WIN' : 'WIN';
+  const hold = multiple >= 100 ? 4200 : multiple >= 20 ? 3200 : multiple >= 5 ? 2400 : 1600;
   $winBanner.dataset.tier = tier;
   $winBannerText.textContent = tier + '  ' + fmt(amount);
-  $winBanner.classList.toggle('big', big);
+  $winBanner.classList.toggle('big', multiple >= 20);
   $winBanner.style.display = 'block';
-  showWinBanner._t = setTimeout(() => { $winBanner.style.display = 'none'; }, 3500);
+  showWinBanner._t = setTimeout(() => { $winBanner.style.display = 'none'; }, hold);
 }
 
 function setSpinning(on) {
@@ -364,10 +364,12 @@ async function playReveal(event) {
   try {
     await sleep(REEL_CLOCK.cruise);
     let landedScatters = 0;
+    let teased = false;
     for (let reel = 0; reel < 5; reel++) {
       const anticipate = landedScatters >= 2 && !state.turbo && !state.slam;
       if (anticipate) {
         $reelsGrid.classList.add('anticipation');
+        if (!teased) { AudioFX.scatter(); teased = true; }
         await sleep(REEL_CLOCK.anticipation);
       } else if (reel > 0) {
         await sleep(REEL_CLOCK.stagger);
