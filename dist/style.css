@@ -420,18 +420,17 @@ body::after {
 .reel-cell .sym-image {
   display: block;
 
-  width: 100%;
-  height: 100%;
+  width: 86%;
+  height: 86%;
+  margin: auto;
 
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 
-  transform: scale(1.035);
-
   filter:
-    saturate(1.13)
-    contrast(1.05)
-    drop-shadow(0 0 5px rgba(255, 43, 214, 0.22));
+    saturate(1.08)
+    contrast(1.04)
+    drop-shadow(0 6px 8px rgba(0, 0, 0, 0.45));
 
   user-select: none;
   pointer-events: none;

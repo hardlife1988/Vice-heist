@@ -1,7 +1,7 @@
 /* Original Miami noir score. No network audio, randomness, or game outcomes. */
 'use strict';
 window.HeistAudio = (() => {
-  let ctx, bus, timer, next = 0, beat = 0, bonus = false, muted = false, unlocked = false;
+  let ctx, bus, timer, next = 0, beat = 0, bonus = false, muted = false, unlocked = false, bed, bedFailed = false;
   const voices = new Set();
   const levels = { music: 0.3, effects: 0.7 };
   try {
@@ -44,11 +44,25 @@ window.HeistAudio = (() => {
       beat++; next += 60 / 96 / 2;
     }
   }
+  function syncBed(audible) {
+    if (bedFailed) return false;
+    if (!bed) {
+      bed = new Audio('assets/audio/base_loop.mp3');
+      bed.loop = true;
+      bed.preload = 'auto';
+      bed.addEventListener('error', () => { bedFailed = true; bed = null; });
+    }
+    bed.volume = Math.max(0, Math.min(1, levels.music * (bonus ? 0.72 : 0.5)));
+    if (!audible) { bed.pause(); return true; }
+    bed.play().catch(() => { bedFailed = true; });
+    return !bedFailed;
+  }
   function sync() {
     if (!ctx) return;
     const audible = unlocked && !muted && !document.hidden && levels.music > 0;
-    bus.gain.setTargetAtTime(audible ? levels.music * 0.65 : 0, ctx.currentTime, 0.12);
-    if (!audible) { stop(); return; }
+    bus.gain.setTargetAtTime(audible && bedFailed ? levels.music * 0.65 : 0, ctx.currentTime, 0.12);
+    if (!audible) { stop(); if (bed) bed.pause(); return; }
+    if (syncBed(true)) { stop(); return; }
     if (!timer) { next = ctx.currentTime + 0.04; schedule(); timer = setInterval(schedule, 75); }
   }
   function unlock() {

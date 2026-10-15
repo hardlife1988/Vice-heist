@@ -339,6 +339,7 @@ async function playReveal(event) {
    * The result has already been selected by the weighted game book.
    * These temporary symbols never affect payout or game math.
    */
+  const REEL_CLOCK = { cruise: 520, stagger: 170, anticipation: 780, settle: 200 };
   const spinTimer = setInterval(() => {
     for (const reelState of reelStates) {
       if (!reelState.running) continue;
@@ -361,18 +362,20 @@ async function playReveal(event) {
    * the first reel stops.
    */
   try {
-    await sleep(500);
+    await sleep(REEL_CLOCK.cruise);
     let landedScatters = 0;
     for (let reel = 0; reel < 5; reel++) {
-      // Reels stop from left to right.
-      if (landedScatters >= 2 && !state.turbo) {
+      const anticipate = landedScatters >= 2 && !state.turbo && !state.slam;
+      if (anticipate) {
         $reelsGrid.classList.add('anticipation');
-        await sleep(220);
+        await sleep(REEL_CLOCK.anticipation);
+      } else if (reel > 0) {
+        await sleep(REEL_CLOCK.stagger);
       }
-      await sleep(180 + reel * 35);
       reelStates[reel].running = false;
       const col = board[reel] || [];
       for (let row = 0; row < 3; row++) paintCell(row, reel, col[row], 'landed');
+      await sleep(REEL_CLOCK.settle);
       AudioFX.reelStop();
       landedScatters += col.filter(sym => (typeof sym === 'object' ? sym?.name : sym) === 'S').length;
     }
