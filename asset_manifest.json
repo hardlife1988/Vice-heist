@@ -1,5 +1,5 @@
 {
-  "status": "prototype extracted from approved concept sheet; dark backgrounds remain; not final transparent artwork",
+  "status": "payable symbols and city background replaced with a matched neon Miami set; unused concept pieces remain; not a final mastered soundtrack",
   "symbols": {
     "female_leader": "assets/symbols/female_leader.webp",
     "male_thief": "assets/symbols/male_thief.webp",
@@ -26,5 +26,26 @@
     "logo": "assets/ui/logo_concept.webp",
     "reel_frame": "assets/ui/reel_frame_concept.webp"
   },
-  "math_mapping": "PENDING: map to actual paytable/reel IDs before gameplay integration"
+  "source_root": "static",
+  "math_mapping_source": "static/game.js: SYMBOL_ASSETS",
+  "math_mapping": {
+    "W": "wild",
+    "S": "scatter",
+    "B": "open_safe",
+    "G": "gold_bars",
+    "D": "diamond",
+    "R": "pink_gem",
+    "E": "cash",
+    "C": "king",
+    "P": "ace",
+    "H": "queen"
+  },
+  "unused_concept_symbols": [
+    "female_leader",
+    "male_thief",
+    "sports_car",
+    "skull_king",
+    "jack",
+    "ten"
+  ]
 }

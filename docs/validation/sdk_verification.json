@@ -1,0 +1,17 @@
+{
+  "sdk_revision": "a6dccd86de740cc5d318079483cb6204cc5c19bc",
+  "results": [
+    {
+      "mode": "base",
+      "books": 100000,
+      "events": 447599,
+      "format_checks_passed": true
+    },
+    {
+      "mode": "bonus",
+      "books": 100000,
+      "events": 4990961,
+      "format_checks_passed": true
+    }
+  ]
+}

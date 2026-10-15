@@ -1,0 +1,53 @@
+name: Vice Heist 104M Round Math Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "feature/cyberpunk-assets"
+    paths:
+      - "math/**"
+      - "requirements.txt"
+      - ".github/workflows/stress-104m.yml"
+
+jobs:
+  validate-104m:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install math dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Build production outcome books
+        run: python math/build_stake_bundle.py --release
+      - name: Audit production books
+        run: python math/validate_bundle.py --publish release/math --release
+      - name: Simulate 104 million rounds
+        run: python math/stress_published.py --rounds 4000000
+      - name: Verify simulation report
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('release/math/four_million_report.json').read_text())
+          results=report['results']
+          assert len(results)==26, len(results)
+          assert report['total_rounds']==104000000
+          assert len({(r['mode'],r['bet_micros']) for r in results})==26
+          assert all(r['rounds']==4000000 and r['pass_checks'] and r['precision_errors']==0 for r in results)
+          print('PASS: 26 mode/bet combinations; 104,000,000 rounds')
+          PY
+      - name: Upload verified simulation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: vice-heist-104m-math-report
+          path: |
+            release/math/four_million_report.json
+            release/math/lookUpTable_*.csv
+            release/math/game_config.json
+          if-no-files-found: error

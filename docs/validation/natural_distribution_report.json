@@ -1,0 +1,399 @@
+{
+  "method": "Restrict transfers to triggered books with an identical 2x initial award. Reduce noncap >=5000x full-round donor weight, add medium50\u2013300x free-spin weight and remove below50x free-spin weight using mass/mean balance. Exact largest remainder and a mass-neutral low-outcome repair preserve integer expected payout.",
+  "status": "Analysis only; production source and bonus A/B/C weights unchanged.",
+  "input_sha256": {
+    "books_base.jsonl.zst": "e9c02a30bcc5a692256ea484fba7cb596ac7c68a1fc08f92f4e978ffc386259d",
+    "books_bonus.jsonl.zst": "e2a711dc11682bb1ab21340a6b86a207b34e46ab045b875ed7419f1a97b0ee69",
+    "lookUpTable_base.csv": "3d4c17521f213c778223ea980183a673333469278bfa735f454f4878a8326533",
+    "lookUpTable_bonus.csv": "f6147b7fd703aeabd3cadbd5d19f16c0c3ed8b4df83742bae6f8cd56ebed60e8"
+  },
+  "baseline_report_sha256": "aae63f8ffc8d800c6c76ef5960e4e5a5cd0f4021680ddf666628e0c1a5ada7a6",
+  "payout_unit": "ordinary bet multiples; bins inclusive; full-round tail includes initial award",
+  "baseline": {
+    "complete_round": {
+      "mean_x": 0.9599999890200601,
+      "p10_x": 0.0,
+      "median_x": 0.1,
+      "p90_x": 1.8,
+      "p99_x": 15.9,
+      "standard_deviation_x": 17.377589844578708,
+      "standard_deviation_per_cost": 17.377589844578708,
+      "hit_probability": 0.5599780787590506,
+      "mean_positive_win_x": 1.7143528031445183,
+      "zero_probability": 0.44002192124094947,
+      "below_cost_probability": 0.8409325118192805,
+      "break_even_probability": 0.011552008391889681,
+      "profit_probability": 0.14751547978882984,
+      "tails_at_least_x": {
+        "100": 6.907754908444617e-05,
+        "500": 4.399999941682401e-06,
+        "1000": 4.299999943007801e-06,
+        "10000": 1.9999999734920005e-06
+      },
+      "maximum_x": 10000.0,
+      "rtp_share_from_at_least_x": {
+        "100": 0.044609081287818986,
+        "500": 0.034798749936785896,
+        "1000": 0.03473187493690738,
+        "10000": 0.020833333295488282
+      },
+      "50_to_300_x": {
+        "probability": 0.0006523950213531564,
+        "mean_contribution_x": 0.05218138311478795,
+        "share_of_return": 0.05435560803292631
+      },
+      "5000_to_10000_x": {
+        "probability": 3.4999999536110005e-06,
+        "mean_contribution_x": 0.030784999591975615,
+        "share_of_return": 0.032067708275080334
+      }
+    },
+    "conditional_free_spins": {
+      "mean_x": 19.70365660424718,
+      "p10_x": 3.4,
+      "median_x": 10.2,
+      "p90_x": 32.8,
+      "p99_x": 76.0,
+      "standard_deviation_x": 204.2885044607879,
+      "standard_deviation_per_cost": 204.2885044607879,
+      "hit_probability": 0.9985702982690412,
+      "mean_positive_win_x": 19.731867289065406,
+      "zero_probability": 0.0014297017309587853,
+      "below_cost_probability": 0.008538957206868212,
+      "break_even_probability": 0.002836994410182175,
+      "profit_probability": 0.9886240483829496,
+      "tails_at_least_x": {
+        "100": 0.0033261748210229943,
+        "500": 0.0006330972225587289,
+        "1000": 0.0006187086493187579,
+        "10000": 0.0
+      },
+      "maximum_x": 9998.0,
+      "rtp_share_from_at_least_x": {
+        "100": 0.26565471149906694,
+        "500": 0.24388852217662552,
+        "1000": 0.2434211628910604,
+        "10000": 0.0
+      },
+      "50_to_300_x": {
+        "probability": 0.027148296391683775,
+        "mean_contribution_x": 2.052462400920344,
+        "share_of_return": 0.10416657385705401
+      },
+      "5000_to_10000_x": {
+        "probability": 0.000503600063398989,
+        "mean_contribution_x": 4.4285150717983095,
+        "share_of_return": 0.22475600142380323
+      }
+    },
+    "trigger_probability": 0.006949959318885239
+  },
+  "candidates": {
+    "N25": {
+      "solver": {
+        "donor_fraction": "1/4",
+        "donor_books": 15,
+        "donor_weight_removed": 375000,
+        "medium_weight_added": 40398366,
+        "low_weight_removed": 40023366,
+        "rounding_repair": {
+          "low_book_index": 62511,
+          "high_book_index": 61005,
+          "payout_step_units": 20,
+          "weight_to_high": 450
+        },
+        "total_weight": 1000000013254,
+        "weighted_payout_units": 96000000174390,
+        "rtp": 0.9599999890200601,
+        "integer_return_and_mass_preserved_exactly": true,
+        "cap_probability_and_trigger_probability_preserved_exactly": true,
+        "initial_base_spin_distribution_preserved_exactly": true
+      },
+      "metrics": {
+        "complete_round": {
+          "mean_x": 0.9599999890200601,
+          "p10_x": 0.0,
+          "median_x": 0.1,
+          "p90_x": 1.8,
+          "p99_x": 15.9,
+          "standard_deviation_x": 16.798138635341473,
+          "standard_deviation_per_cost": 16.798138635341473,
+          "hit_probability": 0.5599780787590506,
+          "mean_positive_win_x": 1.7143528031445183,
+          "zero_probability": 0.44002192124094947,
+          "below_cost_probability": 0.8409325118192805,
+          "break_even_probability": 0.011552008391889681,
+          "profit_probability": 0.14751547978882984,
+          "tails_at_least_x": {
+            "100": 7.274027003590046e-05,
+            "500": 4.024999946652651e-06,
+            "1000": 3.924999947978051e-06,
+            "10000": 1.9999999734920005e-06
+          },
+          "maximum_x": 10000.0,
+          "rtp_share_from_at_least_x": {
+            "100": 0.04245596300256359,
+            "500": 0.03199015619188788,
+            "1000": 0.031923281192009365,
+            "10000": 0.020833333295488282
+          },
+          "50_to_300_x": {
+            "probability": 0.0006924274338225668,
+            "mean_contribution_x": 0.055471624977979084,
+            "share_of_return": 0.05778294334628367
+          },
+          "5000_to_10000_x": {
+            "probability": 3.1249999585812507e-06,
+            "mean_contribution_x": 0.028088749627711712,
+            "share_of_return": 0.029259114530182324
+          }
+        },
+        "conditional_free_spins": {
+          "mean_x": 19.70365660424718,
+          "p10_x": 3.4,
+          "median_x": 10.2,
+          "p90_x": 33.4,
+          "p99_x": 79.0,
+          "standard_deviation_x": 197.19127719420158,
+          "standard_deviation_per_cost": 197.19127719420158,
+          "hit_probability": 0.9985848120228684,
+          "mean_positive_win_x": 19.731580499740218,
+          "zero_probability": 0.0014151879771316265,
+          "below_cost_probability": 0.00849554875191774,
+          "break_even_probability": 0.0028225754770526672,
+          "profit_probability": 0.9886818757710296,
+          "tails_at_least_x": {
+            "100": 0.0038531881146837968,
+            "500": 0.0005791400729088373,
+            "1000": 0.0005647514996688662,
+            "10000": 0.0
+          },
+          "maximum_x": 9998.0,
+          "rtp_share_from_at_least_x": {
+            "100": 0.25050702016020415,
+            "500": 0.2242046635166131,
+            "1000": 0.22373730423104798,
+            "10000": 0.0
+          },
+          "50_to_300_x": {
+            "probability": 0.032961044871345366,
+            "mean_contribution_x": 2.5169368372588905,
+            "share_of_return": 0.1277395809220689
+          },
+          "5000_to_10000_x": {
+            "probability": 0.00044964291374909726,
+            "mean_contribution_x": 4.040671080114888,
+            "share_of_return": 0.20507214276379082
+          }
+        },
+        "trigger_probability": 0.006949959318885239
+      },
+      "lookup_sha256": "ebfa7aa39ec2fc989c3ae5b6af1f7b91ca65bab6dcc53aad55f817bcde996a1e",
+      "books_sha256": "e9c02a30bcc5a692256ea484fba7cb596ac7c68a1fc08f92f4e978ffc386259d"
+    },
+    "N50": {
+      "solver": {
+        "donor_fraction": "1/2",
+        "donor_books": 15,
+        "donor_weight_removed": 750000,
+        "medium_weight_added": 80796733,
+        "low_weight_removed": 80046733,
+        "rounding_repair": {
+          "low_book_index": 62511,
+          "high_book_index": 61005,
+          "payout_step_units": 20,
+          "weight_to_high": -357
+        },
+        "total_weight": 1000000013254,
+        "weighted_payout_units": 96000000174390,
+        "rtp": 0.9599999890200601,
+        "integer_return_and_mass_preserved_exactly": true,
+        "cap_probability_and_trigger_probability_preserved_exactly": true,
+        "initial_base_spin_distribution_preserved_exactly": true
+      },
+      "metrics": {
+        "complete_round": {
+          "mean_x": 0.9599999890200601,
+          "p10_x": 0.0,
+          "median_x": 0.1,
+          "p90_x": 1.8,
+          "p99_x": 15.9,
+          "standard_deviation_x": 16.197971924269556,
+          "standard_deviation_per_cost": 16.197971924269556,
+          "hit_probability": 0.5599780787590506,
+          "mean_positive_win_x": 1.7143528031445183,
+          "zero_probability": 0.44002192124094947,
+          "below_cost_probability": 0.8409325118192805,
+          "break_even_probability": 0.011552008391889681,
+          "profit_probability": 0.14751547978882984,
+          "tails_at_least_x": {
+            "100": 7.640299198735475e-05,
+            "500": 3.6499999516229005e-06,
+            "1000": 3.5499999529483005e-06,
+            "10000": 1.9999999734920005e-06
+          },
+          "maximum_x": 10000.0,
+          "rtp_share_from_at_least_x": {
+            "100": 0.040302844917099866,
+            "500": 0.029181562446989866,
+            "1000": 0.02911468744711135,
+            "10000": 0.020833333295488282
+          },
+          "50_to_300_x": {
+            "probability": 0.0007324598502919771,
+            "mean_contribution_x": 0.058761867164770214,
+            "share_of_return": 0.06121027899672437
+          },
+          "5000_to_10000_x": {
+            "probability": 2.7499999635515005e-06,
+            "mean_contribution_x": 0.02539249966344781,
+            "share_of_return": 0.026450520785284308
+          }
+        },
+        "conditional_free_spins": {
+          "mean_x": 19.70365660424718,
+          "p10_x": 3.6,
+          "median_x": 10.2,
+          "p90_x": 34.6,
+          "p99_x": 92.0,
+          "standard_deviation_x": 189.82888756485545,
+          "standard_deviation_per_cost": 189.82888756485545,
+          "hit_probability": 0.9985993259205813,
+          "mean_positive_win_x": 19.73129371590845,
+          "zero_probability": 0.0014006740794187352,
+          "below_cost_probability": 0.008452140153081536,
+          "break_even_probability": 0.00280815654392316,
+          "profit_probability": 0.9887397033029953,
+          "tails_at_least_x": {
+            "100": 0.004380201552230331,
+            "500": 0.0005251829232589457,
+            "1000": 0.0005107943500189745,
+            "10000": 0.0
+          },
+          "maximum_x": 9998.0,
+          "rtp_share_from_at_least_x": {
+            "100": 0.2353593302073537,
+            "500": 0.2045208048566007,
+            "1000": 0.20405344557103558,
+            "10000": 0.0
+          },
+          "50_to_300_x": {
+            "probability": 0.03877379349489268,
+            "mean_contribution_x": 2.9814112979141254,
+            "share_of_return": 0.1513125892212044
+          },
+          "5000_to_10000_x": {
+            "probability": 0.0003956857640992056,
+            "mean_contribution_x": 3.6528270884314664,
+            "share_of_return": 0.18538828410377842
+          }
+        },
+        "trigger_probability": 0.006949959318885239
+      },
+      "lookup_sha256": "4ad16a854be94518cfa6dd71e09598c81303ead0fd4ff581a03a21cf93a7a871",
+      "books_sha256": "e9c02a30bcc5a692256ea484fba7cb596ac7c68a1fc08f92f4e978ffc386259d"
+    },
+    "N75": {
+      "solver": {
+        "donor_fraction": "3/4",
+        "donor_books": 15,
+        "donor_weight_removed": 1125000,
+        "medium_weight_added": 121195099,
+        "low_weight_removed": 120070099,
+        "rounding_repair": {
+          "low_book_index": 62511,
+          "high_book_index": 61005,
+          "payout_step_units": 20,
+          "weight_to_high": -656
+        },
+        "total_weight": 1000000013254,
+        "weighted_payout_units": 96000000174390,
+        "rtp": 0.9599999890200601,
+        "integer_return_and_mass_preserved_exactly": true,
+        "cap_probability_and_trigger_probability_preserved_exactly": true,
+        "initial_base_spin_distribution_preserved_exactly": true
+      },
+      "metrics": {
+        "complete_round": {
+          "mean_x": 0.9599999890200601,
+          "p10_x": 0.0,
+          "median_x": 0.1,
+          "p90_x": 1.8,
+          "p99_x": 16.0,
+          "standard_deviation_x": 15.574695093972265,
+          "standard_deviation_per_cost": 15.574695093972265,
+          "hit_probability": 0.5599780787590506,
+          "mean_positive_win_x": 1.7143528031445183,
+          "zero_probability": 0.44002192124094947,
+          "below_cost_probability": 0.8409325118192805,
+          "break_even_probability": 0.011552008391889681,
+          "profit_probability": 0.14751547978882984,
+          "tails_at_least_x": {
+            "100": 8.006571293880904e-05,
+            "500": 3.2749999565931507e-06,
+            "1000": 3.1749999579185507e-06,
+            "10000": 1.9999999734920005e-06
+          },
+          "maximum_x": 10000.0,
+          "rtp_share_from_at_least_x": {
+            "100": 0.03814972663184447,
+            "500": 0.026372968702091854,
+            "1000": 0.026306093702213335,
+            "10000": 0.020833333295488282
+          },
+          "50_to_300_x": {
+            "probability": 0.0007724922627613876,
+            "mean_contribution_x": 0.062052109041761346,
+            "share_of_return": 0.06463761432445674
+          },
+          "5000_to_10000_x": {
+            "probability": 2.3749999685217503e-06,
+            "mean_contribution_x": 0.022696249699183907,
+            "share_of_return": 0.023641927040386295
+          }
+        },
+        "conditional_free_spins": {
+          "mean_x": 19.70365660424718,
+          "p10_x": 3.6,
+          "median_x": 10.2,
+          "p90_x": 35.2,
+          "p99_x": 92.0,
+          "standard_deviation_x": 182.16918867220573,
+          "standard_deviation_per_cost": 182.16918867220573,
+          "hit_probability": 0.9986138396744084,
+          "mean_positive_win_x": 19.731006943255892,
+          "zero_probability": 0.0013861603255915763,
+          "below_cost_probability": 0.008408731698131064,
+          "break_even_probability": 0.0027937376107936523,
+          "profit_probability": 0.9887975306910752,
+          "tails_at_least_x": {
+            "100": 0.004907214845891134,
+            "500": 0.00047122577360905396,
+            "1000": 0.00045683720036908285,
+            "10000": 0.0
+          },
+          "maximum_x": 9998.0,
+          "rtp_share_from_at_least_x": {
+            "100": 0.22021163886849088,
+            "500": 0.18483694619658833,
+            "1000": 0.1843695869110232,
+            "10000": 0.0
+          },
+          "50_to_300_x": {
+            "probability": 0.04458654197455427,
+            "mean_contribution_x": 3.445885736238295,
+            "share_of_return": 0.17488559638699366
+          },
+          "5000_to_10000_x": {
+            "probability": 0.00034172861444931393,
+            "mean_contribution_x": 3.264983096748045,
+            "share_of_return": 0.16570442544376604
+          }
+        },
+        "trigger_probability": 0.006949959318885239
+      },
+      "lookup_sha256": "453e9c7a6d9d62f7d2303deb830abebfd38780344d875334c501c5e0ac46061d",
+      "books_sha256": "e9c02a30bcc5a692256ea484fba7cb596ac7c68a1fc08f92f4e978ffc386259d"
+    }
+  }
+}
