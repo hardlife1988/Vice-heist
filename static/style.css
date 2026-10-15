@@ -540,8 +540,7 @@ body::after {
 
 
 .reel-cell.landed {
-  animation:
-    land 0.24s ease-out;
+  animation: land 0.32s cubic-bezier(.18, .9, .2, 1);
 }
 
 @keyframes spin-blur {
@@ -558,12 +557,17 @@ body::after {
 
 @keyframes land {
   0% {
-    transform: scale(1.06);
-    filter: brightness(1.4);
+    transform: translateY(-12px) scale(1.05);
+    filter: brightness(1.45);
+  }
+
+  62% {
+    transform: translateY(4px) scale(0.985);
+    filter: brightness(1.1);
   }
 
   100% {
-    transform: scale(1);
+    transform: translateY(0) scale(1);
     filter: brightness(1);
   }
 }

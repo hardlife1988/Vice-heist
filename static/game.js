@@ -69,10 +69,10 @@ const $spinText = $btnSpin.querySelector('.spin-text');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const SAMPLE_PATHS = {
-  reelStop: 'assets/audio/reel_stop.wav',
-  scatter: 'assets/audio/scatter.wav',
-  bonus: 'assets/audio/bonus.wav',
-  win: 'assets/audio/win.wav',
+  reelStop: 'assets/audio/reel_stop.mp3',
+  scatter: 'assets/audio/scatter.mp3',
+  bonus: 'assets/audio/bonus.mp3',
+  win: 'assets/audio/win.mp3',
   click: null
 };
 const SAMPLE_AUDIO = {};
